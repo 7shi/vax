@@ -229,7 +229,7 @@ public class Main {
             case 0xdf:
                 return op(1, 2, "pusha", true, false);
             default:
-                return "";
+                return "???";
         }
     }
 
@@ -240,9 +240,6 @@ public class Main {
             while (pc < text.length) {
                 int pc2 = pc;
                 String asm = disasm1();
-                if (asm.isEmpty()) {
-                    continue;
-                }
                 for (int i = 0;; ++i) {
                     if (pc2 + i == pc) {
                         if (i <= 4) {
