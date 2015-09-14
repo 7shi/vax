@@ -1,6 +1,7 @@
 package vax;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 import java.nio.file.Paths;
 import java.util.logging.Level;
@@ -19,6 +20,18 @@ public class Main {
         return text[pc++];
     }
 
+    static int fetch16() {
+        int ret = ByteBuffer.wrap(text, pc, 2).order(ByteOrder.LITTLE_ENDIAN).getShort();
+        pc += 2;
+        return ret;
+    }
+
+    static int fetch32() {
+        int ret = ByteBuffer.wrap(text, pc, 4).order(ByteOrder.LITTLE_ENDIAN).getInt();
+        pc += 4;
+        return ret;
+    }
+
     static String[] regs = {
         "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
         "r8", "r9", "r10", "r11", "ap", "fp", "sp", "pc"
@@ -28,12 +41,35 @@ public class Main {
         int b = fetch(), b1 = b >> 4, b2 = b & 15;
         String r = regs[b2];
         switch (b1) {
+            case 0:
+            case 1:
+            case 2:
+            case 3:
+                return String.format("$0x%x", b);
+            case 4:
+                return getArg() + "[" + r + "]";
             case 5:
                 return r;
             case 6:
                 return "(" + r + ")";
+            case 7:
+                return "-(" + r + ")"; // pc?
+            case 8:
+                return "(" + r + ")+"; // pc?
+            case 9:
+                return "*(" + r + ")+"; // pc?
             case 0xa:
                 return String.format("0x%x(%s)", fetch8(), r); // 符号?
+            case 0xb:
+                return String.format("*0x%x(%s)", fetch8(), r); // 符号?
+            case 0xc:
+                return String.format("0x%x(%s)", fetch16(), r); // 符号?
+            case 0xd:
+                return String.format("*0x%x(%s)", fetch16(), r); // 符号?
+            case 0xe:
+                return String.format("0x%x(%s)", fetch32(), r); // 符号?
+            case 0xf:
+                return String.format("*0x%x(%s)", fetch32(), r); // 符号?
             default:
                 return "???";
         }
