@@ -59,6 +59,7 @@ public class Main {
     };
 
     static String[] dref = {"", "*"};
+    static String[] isfx = {"b", "w", "l"};
 
     static String getArg(int n) {
         int b = fetch(), b1 = b >> 4, b2 = b & 15;
@@ -108,10 +109,18 @@ public class Main {
         }
     }
 
+    static String op2(int n, String mne) {
+        String opr1 = getArg(n), opr2 = getArg(n);
+        return String.format("%s%s %s, %s", mne, isfx[n], opr1, opr2);
+    }
+
     static String disasm1() {
-        switch (fetch()) {
+        int b = fetch();
+        switch (b) {
+            case 0x90:
+            case 0xb0:
             case 0xd0:
-                return "movl " + getArg(2) + ", " + getArg(2);
+                return op2((b - 0x90) >> 5, "mov");
             default:
                 return "";
         }
