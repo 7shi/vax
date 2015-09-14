@@ -1,5 +1,7 @@
 package vax;
 
+import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
 import java.nio.file.Paths;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -11,6 +13,10 @@ public class Main {
 
     static int fetch() {
         return Byte.toUnsignedInt(text[pc++]);
+    }
+
+    static int fetch8() {
+        return text[pc++];
     }
 
     static String[] regs = {
@@ -26,6 +32,8 @@ public class Main {
                 return r;
             case 6:
                 return "(" + r + ")";
+            case 0xa:
+                return String.format("0x%x(%s)", fetch8(), r); // 符号?
             default:
                 return "???";
         }
