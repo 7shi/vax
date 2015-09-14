@@ -170,13 +170,30 @@ public class Main {
             buf = ByteBuffer.wrap(text).order(ByteOrder.LITTLE_ENDIAN);
             while (pc < text.length) {
                 int pc2 = pc;
-                String mne = disasm1();
-                if (!mne.isEmpty()) {
-                    System.out.printf("%08x:", pc2);
-                    for (; pc2 < pc; ++pc2) {
-                        System.out.printf(" %02x", text[pc2]);
+                String asm = disasm1();
+                if (asm.isEmpty()) {
+                    continue;
+                }
+                for (int i = 0;; ++i) {
+                    if (pc2 + i == pc) {
+                        if (i <= 4) {
+                            for (; i < 4; ++i) {
+                                System.out.print("   ");
+                            }
+                            System.out.printf("\t%s", asm);
+                        }
+                        System.out.println();
+                        break;
+                    } else if ((i & 3) == 0) {
+                        if (i == 4) {
+                            System.out.printf("\t%s", asm);
+                        }
+                        if (i > 0) {
+                            System.out.println();
+                        }
+                        System.out.printf("%8x:\t", pc2 + i);
                     }
-                    System.out.println("  " + mne);
+                    System.out.printf("%02x ", text[pc2 + i]);
                 }
             }
         } catch (Exception ex) {
