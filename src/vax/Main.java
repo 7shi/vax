@@ -3,7 +3,6 @@ package vax;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.IntBuffer;
 import java.nio.file.Paths;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -11,25 +10,46 @@ import java.util.logging.Logger;
 public class Main {
 
     static byte[] text;
+    static ByteBuffer buf;
     static int pc;
 
     static int fetch() {
         return Byte.toUnsignedInt(text[pc++]);
     }
 
-    static int fetch8() {
-        return text[pc++];
-    }
-
-    static int fetch16() {
-        int ret = ByteBuffer.wrap(text, pc, 2).order(ByteOrder.LITTLE_ENDIAN).getShort();
-        pc += 2;
+    static int fetch(int n) {
+        int ret = 0;
+        switch (n) {
+            case 0:
+                ret = Byte.toUnsignedInt(text[pc++]);
+                break;
+            case 1:
+                ret = Short.toUnsignedInt(buf.getShort(pc));
+                pc += 2;
+                break;
+            case 2:
+                ret = buf.getInt(pc);
+                pc += 4;
+                break;
+        }
         return ret;
     }
 
-    static int fetch32() {
-        int ret = ByteBuffer.wrap(text, pc, 4).order(ByteOrder.LITTLE_ENDIAN).getInt();
-        pc += 4;
+    static int fetchSigned(int n) {
+        int ret = 0;
+        switch (n) {
+            case 0:
+                ret = text[pc++];
+                break;
+            case 1:
+                ret = buf.getShort(pc);
+                pc += 2;
+                break;
+            case 2:
+                ret = buf.getInt(pc);
+                pc += 4;
+                break;
+        }
         return ret;
     }
 
@@ -40,18 +60,7 @@ public class Main {
 
     static String[] dref = {"", "*"};
 
-    static String getArgDisp(int b1, int b2, String r, int disp) {
-        String prefix = dref[b1 & 1];
-        if (b2 == 15) {
-            return String.format("%s0x%x", prefix, pc + disp);
-        } else if (disp == 0) {
-            return String.format("%s(%s)", prefix, r);
-        } else {
-            return String.format("%s0x%x(%s)", prefix, disp, r); // 符号?
-        }
-    }
-
-    static String getArg() {
+    static String getArg(int n) {
         int b = fetch(), b1 = b >> 4, b2 = b & 15;
         String r = regs[b2];
         switch (b1) {
@@ -61,7 +70,7 @@ public class Main {
             case 3:
                 return String.format("$0x%x", b);
             case 4:
-                return getArg() + "[" + r + "]";
+                return getArg(n) + "[" + r + "]";
             case 5:
                 return r;
             case 6:
@@ -69,21 +78,31 @@ public class Main {
             case 7:
                 return "-(" + r + ")";
             case 8:
-            case 9:
+            case 9: {
+                String prefix = dref[b1 & 1];
                 if (b2 == 15) {
-                    return dref[b1 & 1] + String.format("$0x%08x", fetch32());
+                    String f = "$0x%0" + (1 << n) + "x";
+                    return prefix + String.format(f, fetch(n));
                 } else {
-                    return dref[b1 & 1] + "(" + r + ")+";
+                    return prefix + "(" + r + ")+";
                 }
+            }
             case 0xa:
             case 0xb:
-                return getArgDisp(b1, b2, r, fetch8());
             case 0xc:
             case 0xd:
-                return getArgDisp(b1, b2, r, fetch16());
             case 0xe:
-            case 0xf:
-                return getArgDisp(b1, b2, r, fetch32());
+            case 0xf: {
+                String prefix = dref[b1 & 1];
+                int disp = fetchSigned((b1 - 0xa) >> 1);
+                if (b2 == 15) {
+                    return String.format("%s0x%x", prefix, pc + disp);
+                } else if (disp == 0) {
+                    return String.format("%s(%s)", prefix, r);
+                } else {
+                    return String.format("%s0x%x(%s)", prefix, disp, r); // 符号?
+                }
+            }
             default:
                 return "???";
         }
@@ -92,7 +111,7 @@ public class Main {
     static String disasm1() {
         switch (fetch()) {
             case 0xd0:
-                return "movl " + getArg() + ", " + getArg();
+                return "movl " + getArg(2) + ", " + getArg(2);
             default:
                 return "";
         }
@@ -101,6 +120,7 @@ public class Main {
     static void disasm(String path) {
         try {
             text = java.nio.file.Files.readAllBytes(Paths.get(path));
+            buf = ByteBuffer.wrap(text).order(ByteOrder.LITTLE_ENDIAN);
             while (pc < text.length) {
                 int pc2 = pc;
                 String mne = disasm1();
@@ -114,7 +134,6 @@ public class Main {
             }
         } catch (Exception ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-            return;
         }
     }
 
