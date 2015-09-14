@@ -30,28 +30,36 @@ public class Main {
         }
     }
 
-    public static void main(String[] args) {
+    static String disasm1() {
+        switch (fetch()) {
+            case 0xd0:
+                return "movl " + getArg() + ", " + getArg();
+            default:
+                return "";
+        }
+    }
+
+    static void disasm(String path) {
         try {
-            text = java.nio.file.Files.readAllBytes(Paths.get("samples/unix.text"));
+            text = java.nio.file.Files.readAllBytes(Paths.get(path));
             while (pc < text.length) {
                 int pc2 = pc;
-                String mne = "???";
-                switch (fetch()) {
-                    case 0xd0:
-                        mne = "movl " + getArg() + ", " + getArg();
-                        break;
-                    default:
-                        continue;
+                String mne = disasm1();
+                if (!mne.isEmpty()) {
+                    System.out.printf("%08x:", pc2);
+                    for (; pc2 < pc; ++pc2) {
+                        System.out.printf(" %02x", text[pc2]);
+                    }
+                    System.out.println("  " + mne);
                 }
-                System.out.printf("%08x:", pc2);
-                for (; pc2 < pc; ++pc2) {
-                    System.out.printf(" %02x", text[pc2]);
-                }
-                System.out.println("  " + mne);
             }
         } catch (Exception ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
             return;
         }
+    }
+
+    public static void main(String[] args) {
+        disasm("samples/unix.text");
     }
 }
