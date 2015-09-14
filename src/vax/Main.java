@@ -70,7 +70,7 @@ public class Main {
             case 3:
                 return String.format("$0x%x", b);
             case 4:
-                return getArg(n) + "[" + r + "]";
+                return getArg(2) + "[" + r + "]";
             case 5:
                 return r;
             case 6:
