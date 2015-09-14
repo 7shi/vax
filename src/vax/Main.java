@@ -25,7 +25,7 @@ public class Main {
     };
 
     static String getArg() {
-        int b = fetch(), b1 = b >> 4, b2 = b & 7;
+        int b = fetch(), b1 = b >> 4, b2 = b & 15;
         String r = regs[b2];
         switch (b1) {
             case 5:
