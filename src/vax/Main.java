@@ -107,13 +107,15 @@ public class Main {
         }
     }
 
-    static String op(int count, int n, String mne, boolean hasIsfx, String sfx) {
+    static String op(int count, int n, String mne, boolean sfx1, boolean sfx2) {
         StringBuilder sb = new StringBuilder();
         sb.append(mne);
-        if (hasIsfx) {
+        if (sfx1) {
             sb.append(isfx[n]);
         }
-        sb.append(sfx);
+        if (sfx2) {
+            sb.append(count);
+        }
         sb.append(" ");
         for (int i = 0; i < count; ++i) {
             if (i > 0) {
@@ -122,6 +124,11 @@ public class Main {
             sb.append(getOpr(n));
         }
         return sb.toString();
+    }
+
+    static String opi23(int b, String mne) {
+        int c = (b & 1) + 2;
+        return op(c, (b - 0x80) >> 5, mne, true, true);
     }
 
     static String disasm1() {
@@ -134,29 +141,27 @@ public class Main {
             case 0x05:
                 return "rsb";
             case 0x80:
-            case 0xa0:
-            case 0xc0:
-                return op(2, (b - 0x80) >> 5, "add", true, "2");
             case 0x81:
+            case 0xa0:
             case 0xa1:
+            case 0xc0:
             case 0xc1:
-                return op(3, (b - 0x80) >> 5, "add", true, "3");
+                return opi23(b, "add");
             case 0x82:
-            case 0xa2:
-            case 0xc2:
-                return op(2, (b - 0x80) >> 5, "sub", true, "2");
             case 0x83:
+            case 0xa2:
             case 0xa3:
+            case 0xc2:
             case 0xc3:
-                return op(3, (b - 0x80) >> 5, "sub", true, "3");
+                return opi23(b, "sub");
             case 0x90:
             case 0xb0:
             case 0xd0:
-                return op(2, (b - 0x90) >> 5, "mov", true, "");
+                return op(2, (b - 0x90) >> 5, "mov", true, false);
             case 0xfb:
-                return op(2, 2, "call", false, "s");
+                return op(2, 2, "calls", false, false);
             case 0xdd:
-                return op(1, 2, "push", true, "");
+                return op(1, 2, "push", true, false);
             default:
                 return "";
         }
