@@ -149,6 +149,10 @@ public class Main {
             case 0xb0:
             case 0xd0:
                 return op(2, (b - 0x90) >> 5, "mov", true, "");
+            case 0xfb:
+                return op(2, 2, "call", false, "s");
+            case 0xdd:
+                return op(1, 2, "push", true, "");
             default:
                 return "";
         }
