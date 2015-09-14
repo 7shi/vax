@@ -138,6 +138,8 @@ public class Main {
     static String disasm1() {
         int b = fetch();
         switch (b) {
+            case 0x00:
+                return "halt";
             case 0x01:
                 return "nop";
             case 0x04:
