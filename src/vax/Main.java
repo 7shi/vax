@@ -109,14 +109,19 @@ public class Main {
         }
     }
 
-    static String op2(int n, String mne, String sfx) {
-        String opr1 = getOpr(n), opr2 = getOpr(n);
-        return String.format("%s%s%s %s,%s", mne, isfx[n], sfx, opr1, opr2);
-    }
-
-    static String op3(int n, String mne, String sfx) {
-        String opr1 = getOpr(n), opr2 = getOpr(n), opr3 = getOpr(n);
-        return String.format("%s%s%s %s,%s, %s", mne, isfx[n], sfx, opr1, opr2, opr3);
+    static String op(int count, int n, String mne, String sfx) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(mne);
+        sb.append(isfx[n]);
+        sb.append(sfx);
+        sb.append(" ");
+        for (int i = 0; i < count; ++i) {
+            if (i > 0) {
+                sb.append(",");
+            }
+            sb.append(getOpr(n));
+        }
+        return sb.toString();
     }
 
     static String disasm1() {
@@ -125,23 +130,23 @@ public class Main {
             case 0x80:
             case 0xa0:
             case 0xc0:
-                return op2((b - 0x80) >> 5, "add", "2");
+                return op(2, (b - 0x80) >> 5, "add", "2");
             case 0x81:
             case 0xa1:
             case 0xc1:
-                return op3((b - 0x80) >> 5, "add", "3");
+                return op(3, (b - 0x80) >> 5, "add", "3");
             case 0x82:
             case 0xa2:
             case 0xc2:
-                return op2((b - 0x80) >> 5, "sub", "2");
+                return op(2, (b - 0x80) >> 5, "sub", "2");
             case 0x83:
             case 0xa3:
             case 0xc3:
-                return op3((b - 0x80) >> 5, "sub", "3");
+                return op(3, (b - 0x80) >> 5, "sub", "3");
             case 0x90:
             case 0xb0:
             case 0xd0:
-                return op2((b - 0x90) >> 5, "mov", "");
+                return op(2, (b - 0x90) >> 5, "mov", "");
             default:
                 return "";
         }
