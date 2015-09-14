@@ -67,7 +67,7 @@ public class Main {
             case 6:
                 return "(" + r + ")";
             case 7:
-                return "-(" + r + ")"; // pc?
+                return "-(" + r + ")";
             case 8:
             case 9:
                 if (b2 == 15) {
