@@ -1,3 +1,4 @@
+// This file is licensed under the CC0.
 package vax;
 
 import java.nio.ByteBuffer;
