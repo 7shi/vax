@@ -37,6 +37,19 @@ public class Main {
         "r8", "r9", "r10", "r11", "ap", "fp", "sp", "pc"
     };
 
+    static String[] dref = {"", "*"};
+
+    static String getArgDisp(int b1, int b2, String r, int disp) {
+        String prefix = dref[b1 & 1];
+        if (b2 == 15) {
+            return String.format("%s0x%x", prefix, pc + disp);
+        } else if (disp == 0) {
+            return String.format("%s(%s)", prefix, r);
+        } else {
+            return String.format("%s0x%x(%s)", prefix, disp, r); // 符号?
+        }
+    }
+
     static String getArg() {
         int b = fetch(), b1 = b >> 4, b2 = b & 15;
         String r = regs[b2];
@@ -55,21 +68,21 @@ public class Main {
             case 7:
                 return "-(" + r + ")"; // pc?
             case 8:
-                return "(" + r + ")+"; // pc?
             case 9:
-                return "*(" + r + ")+"; // pc?
+                if (b2 == 15) {
+                    return dref[b1 & 1] + String.format("$0x%08x", fetch32());
+                } else {
+                    return dref[b1 & 1] + "(" + r + ")+";
+                }
             case 0xa:
-                return String.format("0x%x(%s)", fetch8(), r); // 符号?
             case 0xb:
-                return String.format("*0x%x(%s)", fetch8(), r); // 符号?
+                return getArgDisp(b1, b2, r, fetch8());
             case 0xc:
-                return String.format("0x%x(%s)", fetch16(), r); // 符号?
             case 0xd:
-                return String.format("*0x%x(%s)", fetch16(), r); // 符号?
+                return getArgDisp(b1, b2, r, fetch16());
             case 0xe:
-                return String.format("0x%x(%s)", fetch32(), r); // 符号?
             case 0xf:
-                return String.format("*0x%x(%s)", fetch32(), r); // 符号?
+                return getArgDisp(b1, b2, r, fetch32());
             default:
                 return "???";
         }
