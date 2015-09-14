@@ -15,7 +15,8 @@ public class Main {
 
     static String[] regs = {
         "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
-        "r8", "r9", "r10", "r11", "ap", "fp", "sp", "pc"};
+        "r8", "r9", "r10", "r11", "ap", "fp", "sp", "pc"
+    };
 
     static String getArg() {
         int b = fetch(), b1 = b >> 4, b2 = b & 7;
