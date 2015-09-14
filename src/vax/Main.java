@@ -61,7 +61,7 @@ public class Main {
     static String[] dref = {"", "*"};
     static String[] isfx = {"b", "w", "l"};
 
-    static String getArg(int n) {
+    static String getOpr(int n) {
         int b = fetch(), b1 = b >> 4, b2 = b & 15;
         String r = regs[b2];
         switch (b1) {
@@ -71,7 +71,7 @@ public class Main {
             case 3:
                 return String.format("$0x%x", b);
             case 4:
-                return getArg(2) + "[" + r + "]";
+                return getOpr(2) + "[" + r + "]";
             case 5:
                 return r;
             case 6:
@@ -110,7 +110,7 @@ public class Main {
     }
 
     static String op2(int n, String mne) {
-        String opr1 = getArg(n), opr2 = getArg(n);
+        String opr1 = getOpr(n), opr2 = getOpr(n);
         return String.format("%s%s %s, %s", mne, isfx[n], opr1, opr2);
     }
 
