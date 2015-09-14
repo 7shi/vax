@@ -57,8 +57,6 @@ public class Main {
         "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
         "r8", "r9", "r10", "r11", "ap", "fp", "sp", "pc"
     };
-
-    static String[] dref = {"", "*"};
     static String[] isfx = {"b", "w", "l"};
 
     static String getOpr(int n) {
@@ -80,7 +78,7 @@ public class Main {
                 return "-(" + r + ")";
             case 8:
             case 9: {
-                String prefix = dref[b1 & 1];
+                String prefix = (b1 & 1) == 1 ? "@" : "";
                 if (b2 == 15) {
                     String f = "$0x%0" + (1 << n) + "x";
                     return prefix + String.format(f, fetch(n));
@@ -94,7 +92,7 @@ public class Main {
             case 0xd:
             case 0xe:
             case 0xf: {
-                String prefix = dref[b1 & 1];
+                String prefix = (b1 & 1) == 1 ? "*" : "";
                 int disp = fetchSigned((b1 - 0xa) >> 1);
                 if (b2 == 15) {
                     return String.format("%s0x%x", prefix, pc + disp);
