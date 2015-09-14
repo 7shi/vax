@@ -131,6 +131,10 @@ public class Main {
         return op(c, (b - 0x80) >> 5, mne, true, true);
     }
 
+    static String[] br = {
+        "bneq", "beql", "bgtr", "bleq", "", "",
+        "bgeq", "blss", "bgtru", "blequ", "bvc", "bvs", "bcc", "bcs"};
+
     static String disasm1() {
         int b = fetch();
         switch (b) {
@@ -193,10 +197,35 @@ public class Main {
             case 0xb0:
             case 0xd0:
                 return op(2, (b - 0x90) >> 5, "mov", true, false);
+            case 0x12:
+            case 0x13:
+            case 0x14:
+            case 0x15:
+            case 0x18:
+            case 0x19:
+            case 0x1a:
+            case 0x1b:
+            case 0x1c:
+            case 0x1d:
+            case 0x1e:
+            case 0x1f: {
+                int rel = fetchSigned(0);
+                return String.format("%s 0x%x", br[b - 0x12], pc + rel);
+            }
+            case 0x16:
+                return op(1, 2, "jsb", false, false);
+            case 0x17:
+                return op(1, 2, "jmp", false, false);
             case 0xfb:
                 return op(2, 2, "calls", false, false);
+            case 0x98:
+                return op(2, 0, "cvtbl", false, false);
+            case 0x99:
+                return op(2, 0, "cvtbw", false, false);
             case 0xdd:
                 return op(1, 2, "push", true, false);
+            case 0xdf:
+                return op(1, 2, "pusha", true, false);
             default:
                 return "";
         }
