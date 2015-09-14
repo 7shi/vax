@@ -1,6 +1,5 @@
 package vax;
 
-import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -14,28 +13,45 @@ public class Main {
         return Byte.toUnsignedInt(text[pc++]);
     }
 
+    static String[] regs = {
+        "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
+        "r8", "r9", "r10", "r11", "ap", "fp", "sp", "pc"};
+
+    static String getArg() {
+        int b = fetch(), b1 = b >> 4, b2 = b & 7;
+        String r = regs[b2];
+        switch (b1) {
+            case 5:
+                return r;
+            case 6:
+                return "(" + r + ")";
+            default:
+                return "???";
+        }
+    }
+
     public static void main(String[] args) {
         try {
             text = java.nio.file.Files.readAllBytes(Paths.get("samples/unix.text"));
-        } catch (IOException ex) {
+            while (pc < text.length) {
+                int pc2 = pc;
+                String mne = "???";
+                switch (fetch()) {
+                    case 0xd0:
+                        mne = "movl " + getArg() + ", " + getArg();
+                        break;
+                    default:
+                        continue;
+                }
+                System.out.printf("%08x:", pc2);
+                for (; pc2 < pc; ++pc2) {
+                    System.out.printf(" %02x", text[pc2]);
+                }
+                System.out.println("  " + mne);
+            }
+        } catch (Exception ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
             return;
-        }
-        while (pc < text.length) {
-            int pc2 = pc;
-            String mne = "???";
-            switch (fetch()) {
-                case 0xd0:
-                    mne = "movl";
-                    break;
-                default:
-                    continue;
-            }
-            System.out.printf("%08x:", pc2);
-            for (; pc2 < pc; ++pc2) {
-                System.out.printf(" %02x", text[pc2]);
-            }
-            System.out.println("  " + mne);
         }
     }
 }
