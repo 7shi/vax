@@ -109,10 +109,12 @@ public class Main {
         }
     }
 
-    static String op(int count, int n, String mne, String sfx) {
+    static String op(int count, int n, String mne, boolean hasIsfx, String sfx) {
         StringBuilder sb = new StringBuilder();
         sb.append(mne);
-        sb.append(isfx[n]);
+        if (hasIsfx) {
+            sb.append(isfx[n]);
+        }
         sb.append(sfx);
         sb.append(" ");
         for (int i = 0; i < count; ++i) {
@@ -130,23 +132,23 @@ public class Main {
             case 0x80:
             case 0xa0:
             case 0xc0:
-                return op(2, (b - 0x80) >> 5, "add", "2");
+                return op(2, (b - 0x80) >> 5, "add", true, "2");
             case 0x81:
             case 0xa1:
             case 0xc1:
-                return op(3, (b - 0x80) >> 5, "add", "3");
+                return op(3, (b - 0x80) >> 5, "add", true, "3");
             case 0x82:
             case 0xa2:
             case 0xc2:
-                return op(2, (b - 0x80) >> 5, "sub", "2");
+                return op(2, (b - 0x80) >> 5, "sub", true, "2");
             case 0x83:
             case 0xa3:
             case 0xc3:
-                return op(3, (b - 0x80) >> 5, "sub", "3");
+                return op(3, (b - 0x80) >> 5, "sub", true, "3");
             case 0x90:
             case 0xb0:
             case 0xd0:
-                return op(2, (b - 0x90) >> 5, "mov", "");
+                return op(2, (b - 0x90) >> 5, "mov", true, "");
             default:
                 return "";
         }
