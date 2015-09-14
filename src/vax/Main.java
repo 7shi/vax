@@ -129,6 +129,12 @@ public class Main {
     static String disasm1() {
         int b = fetch();
         switch (b) {
+            case 0x01:
+                return "nop";
+            case 0x04:
+                return "ret";
+            case 0x05:
+                return "rsb";
             case 0x80:
             case 0xa0:
             case 0xc0:
