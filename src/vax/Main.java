@@ -154,6 +154,41 @@ public class Main {
             case 0xc2:
             case 0xc3:
                 return opi23(b, "sub");
+            case 0x84:
+            case 0x85:
+            case 0xa4:
+            case 0xa5:
+            case 0xc4:
+            case 0xc5:
+                return opi23(b, "mul");
+            case 0x86:
+            case 0x87:
+            case 0xa6:
+            case 0xa7:
+            case 0xc6:
+            case 0xc7:
+                return opi23(b, "div");
+            case 0x88:
+            case 0x89:
+            case 0xa8:
+            case 0xa9:
+            case 0xc8:
+            case 0xc9:
+                return opi23(b, "bis");
+            case 0x8a:
+            case 0x8b:
+            case 0xaa:
+            case 0xab:
+            case 0xca:
+            case 0xcb:
+                return opi23(b, "bic");
+            case 0x8c:
+            case 0x8d:
+            case 0xac:
+            case 0xad:
+            case 0xcc:
+            case 0xcd:
+                return opi23(b, "xor");
             case 0x90:
             case 0xb0:
             case 0xd0:
