@@ -130,6 +130,14 @@ public class Main {
             case 0xa1:
             case 0xc1:
                 return op3((b - 0x80) >> 5, "add", "3");
+            case 0x82:
+            case 0xa2:
+            case 0xc2:
+                return op2((b - 0x80) >> 5, "sub", "2");
+            case 0x83:
+            case 0xa3:
+            case 0xc3:
+                return op3((b - 0x80) >> 5, "sub", "3");
             case 0x90:
             case 0xb0:
             case 0xd0:
