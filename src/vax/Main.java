@@ -269,6 +269,7 @@ public class Main {
     }
 
     public static void main(String[] args) {
-        disasm("samples/unix.text");
+        //disasm("samples/unix.text");
+        disasm("samples/echo.text");
     }
 }
