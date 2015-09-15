@@ -463,7 +463,7 @@ public class Main {
     public static void main(String[] args) {
         try {
             if (args.length == 0) {
-                //new Disasm("samples/unix.text").disasm();
+                //new Disasm("samples/unix.text").disasm(System.out);
                 new Disasm("samples/echo.text").disasm(System.out);
             } else {
                 for (int i = 0; i < args.length; ++i) {
