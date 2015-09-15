@@ -174,6 +174,15 @@ class VAXOps {
         "bneq", "beql", "bgtr", "bleq", "", "",
         "bgeq", "blss", "bgtru", "blequ", "bvc", "bvs", "bcc", "bcs"
     };
+    private static final VAXOp[] noops = new VAXOp[0x10000];
+
+    private static VAXOp noop(int b1, int b2) {
+        int b = b1 << 8 | b2;
+        if (noops[b] == null) {
+            noops[b] = new VAXOp(String.format(".word 0x%x", b));
+        }
+        return noops[b];
+    }
 
     private static VAXOp opi23(int b, String mne) {
         int c = (b & 1) + 2;
@@ -276,7 +285,7 @@ class VAXOps {
             case 0xdf:
                 return new VAXOp("pushal", VAXType.LONG, 1);
             default:
-                return new VAXOp("???");
+                return noop(b, dis.fetch());
         }
     }
 }
