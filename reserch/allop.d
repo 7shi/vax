@@ -6,250 +6,250 @@
 05          	rsb
 06          	ldpctx
 07          	svpctx
-08 50 51 52 	cvtps r0,r1,r2,r3
-09 50 51 52 	cvtsp r0,r1,r2,r3
-0a 50 51 52 	index r0,r1,r2,r3,r4,r5
-0b 50 51 52 	crc r0,r1,r2,r3
-0c 50 51 52 	prober r0,r1,r2
-0d 50 51 52 	probew r0,r1,r2
-0e 50 51    	insque r0,r1
-0f 50 51    	remque r0,r1
-10 50       	bsbb 0x52
-11 50       	brb 0x52
-12 50       	bneq 0x52
-13 50       	beql 0x52
-14 50       	bgtr 0x52
-15 50       	bleq 0x52
-16 50       	jsb r0
-17 50       	jmp r0
-18 50       	bgeq 0x52
-19 50       	blss 0x52
-1a 50       	bgtru 0x52
-1b 50       	blequ 0x52
-1c 50       	bvc 0x52
-1d 50       	bvs 0x52
-1e 50       	bcc 0x52
-1f 50       	blssu 0x52
-20 50 51 52 	addp4 r0,r1,r2,r3
-21 50 51 52 	addp6 r0,r1,r2,r3,r4,r5
-22 50 51 52 	subp4 r0,r1,r2,r3
-23 50 51 52 	subp6 r0,r1,r2,r3,r4,r5
-24 50 51 52 	cvtpt r0,r1,r2,r3,r4
-25 50 51 52 	mulp r0,r1,r2,r3,r4,r5
-26 50 51 52 	cvttp r0,r1,r2,r3,r4
-27 50 51 52 	divp r0,r1,r2,r3,r4,r5
-28 50 51 52 	movc3 r0,r1,r2
-29 50 51 52 	cmpc3 r0,r1,r2
-2a 50 51 52 	scanc r0,r1,r2,r3
-2b 50 51 52 	spanc r0,r1,r2,r3
-2c 50 51 52 	movc5 r0,r1,r2,r3,r4
-2d 50 51 52 	cmpc5 r0,r1,r2,r3,r4
-2e 50 51 52 	movtc r0,r1,r2,r3,r4,r5
-2f 50 51 52 	movtuc r0,r1,r2,r3,r4,r5
-30 50 51    	bsbw 0x5153
-31 50 51    	brw 0x5153
-32 50 51    	cvtwl r0,r1
-33 50 51    	cvtwb r0,r1
-34 50 51 52 	movp r0,r1,r2
-35 50 51 52 	cmpp3 r0,r1,r2
-36 50 51 52 	cvtpl r0,r1,r2
-37 50 51 52 	cmpp4 r0,r1,r2,r3
-38 50 51 52 	editpc r0,r1,r2,r3
-39 50 51 52 	matchc r0,r1,r2,r3
-3a 50 51 52 	locc r0,r1,r2
-3b 50 51 52 	skpc r0,r1,r2
-3c 50 51    	movzwl r0,r1
-3d 50 51 52 	acbw r0,r1,r2,0x5459
-3e 50 51    	movaw r0,r1
-3f 50       	pushaw r0
-40 50 51    	addf2 r0,r1
-41 50 51 52 	addf3 r0,r1,r2
-42 50 51    	subf2 r0,r1
-43 50 51 52 	subf3 r0,r1,r2
-44 50 51    	mulf2 r0,r1
-45 50 51 52 	mulf3 r0,r1,r2
-46 50 51    	divf2 r0,r1
-47 50 51 52 	divf3 r0,r1,r2
-48 50 51    	cvtfb r0,r1
-49 50 51    	cvtfw r0,r1
-4a 50 51    	cvtfl r0,r1
-4b 50 51    	cvtrfl r0,r1
-4c 50 51    	cvtbf r0,r1
-4d 50 51    	cvtwf r0,r1
-4e 50 51    	cvtlf r0,r1
-4f 50 51 52 	acbf r0,r1,r2,0x5459
-50 50 51    	movf r0,r1
-51 50 51    	cmpf r0,r1
-52 50 51    	mnegf r0,r1
-53 50       	tstf r0
-54 50 51 52 	emodf r0,r1,r2,r3,r4
-55 50 51 52 	polyf r0,r1,r2
-56 50 51    	cvtfd r0,r1
-57 50       	.word 0x5750
-58 50 51    	adawi r0,r1
-59 50       	.word 0x5950
-5a 50       	.word 0x5a50
-5b 50       	.word 0x5b50
-5c 50 51    	insqhi r0,r1
-5d 50 51    	insqti r0,r1
-5e 50 51    	remqhi r0,r1
-5f 50 51    	remqti r0,r1
-60 50 51    	addd2 r0,r1
-61 50 51 52 	addd3 r0,r1,r2
-62 50 51    	subd2 r0,r1
-63 50 51 52 	subd3 r0,r1,r2
-64 50 51    	muld2 r0,r1
-65 50 51 52 	muld3 r0,r1,r2
-66 50 51    	divd2 r0,r1
-67 50 51 52 	divd3 r0,r1,r2
-68 50 51    	cvtdb r0,r1
-69 50 51    	cvtdw r0,r1
-6a 50 51    	cvtdl r0,r1
-6b 50 51    	cvtrdl r0,r1
-6c 50 51    	cvtbd r0,r1
-6d 50 51    	cvtwd r0,r1
-6e 50 51    	cvtld r0,r1
-6f 50 51 52 	acbd r0,r1,r2,0x5459
-70 50 51    	movd r0,r1
-71 50 51    	cmpd r0,r1
-72 50 51    	mnegd r0,r1
-73 50       	tstd r0
-74 50 51 52 	emodd r0,r1,r2,r3,r4
-75 50 51 52 	polyd r0,r1,r2
-76 50 51    	cvtdf r0,r1
-77 50       	.word 0x7750
-78 50 51 52 	ashl r0,r1,r2
-79 50 51 52 	ashq r0,r1,r2
-7a 50 51 52 	emul r0,r1,r2,r3
-7b 50 51 52 	ediv r0,r1,r2,r3
-7c 50       	clrd r0
-7d 50 51    	movq r0,r1
-7e 50 51    	movaq r0,r1
-7f 50       	pushaq r0
-80 50 51    	addb2 r0,r1
-81 50 51 52 	addb3 r0,r1,r2
-82 50 51    	subb2 r0,r1
-83 50 51 52 	subb3 r0,r1,r2
-84 50 51    	mulb2 r0,r1
-85 50 51 52 	mulb3 r0,r1,r2
-86 50 51    	divb2 r0,r1
-87 50 51 52 	divb3 r0,r1,r2
-88 50 51    	bisb2 r0,r1
-89 50 51 52 	bisb3 r0,r1,r2
-8a 50 51    	bicb2 r0,r1
-8b 50 51 52 	bicb3 r0,r1,r2
-8c 50 51    	xorb2 r0,r1
-8d 50 51 52 	xorb3 r0,r1,r2
-8e 50 51    	mnegb r0,r1
-8f 50 51 52 	caseb r0,r1,r2
-90 50 51    	movb r0,r1
-91 50 51    	cmpb r0,r1
-92 50 51    	mcomb r0,r1
-93 50 51    	bitb r0,r1
-94 50       	clrb r0
-95 50       	tstb r0
-96 50       	incb r0
-97 50       	decb r0
-98 50 51    	cvtbl r0,r1
-99 50 51    	cvtbw r0,r1
-9a 50 51    	movzbl r0,r1
-9b 50 51    	movzbw r0,r1
-9c 50 51 52 	rotl r0,r1,r2
-9d 50 51 52 	acbb r0,r1,r2,0x5459
-9e 50 51    	movab r0,r1
-9f 50       	pushab r0
-a0 50 51    	addw2 r0,r1
-a1 50 51 52 	addw3 r0,r1,r2
-a2 50 51    	subw2 r0,r1
-a3 50 51 52 	subw3 r0,r1,r2
-a4 50 51    	mulw2 r0,r1
-a5 50 51 52 	mulw3 r0,r1,r2
-a6 50 51    	divw2 r0,r1
-a7 50 51 52 	divw3 r0,r1,r2
-a8 50 51    	bisw2 r0,r1
-a9 50 51 52 	bisw3 r0,r1,r2
-aa 50 51    	bicw2 r0,r1
-ab 50 51 52 	bicw3 r0,r1,r2
-ac 50 51    	xorw2 r0,r1
-ad 50 51 52 	xorw3 r0,r1,r2
-ae 50 51    	mnegw r0,r1
-af 50 51 52 	casew r0,r1,r2
-b0 50 51    	movw r0,r1
-b1 50 51    	cmpw r0,r1
-b2 50 51    	mcomw r0,r1
-b3 50 51    	bitw r0,r1
-b4 50       	clrw r0
-b5 50       	tstw r0
-b6 50       	incw r0
-b7 50       	decw r0
-b8 50       	bispsw r0
-b9 50       	bicpsw r0
-ba 50       	popr r0
-bb 50       	pushr r0
-bc 50       	chmk r0
-bd 50       	chme r0
-be 50       	chms r0
-bf 50       	chmu r0
-c0 50 51    	addl2 r0,r1
-c1 50 51 52 	addl3 r0,r1,r2
-c2 50 51    	subl2 r0,r1
-c3 50 51 52 	subl3 r0,r1,r2
-c4 50 51    	mull2 r0,r1
-c5 50 51 52 	mull3 r0,r1,r2
-c6 50 51    	divl2 r0,r1
-c7 50 51 52 	divl3 r0,r1,r2
-c8 50 51    	bisl2 r0,r1
-c9 50 51 52 	bisl3 r0,r1,r2
-ca 50 51    	bicl2 r0,r1
-cb 50 51 52 	bicl3 r0,r1,r2
-cc 50 51    	xorl2 r0,r1
-cd 50 51 52 	xorl3 r0,r1,r2
-ce 50 51    	mnegl r0,r1
-cf 50 51 52 	casel r0,r1,r2
-d0 50 51    	movl r0,r1
-d1 50 51    	cmpl r0,r1
-d2 50 51    	mcoml r0,r1
-d3 50 51    	bitl r0,r1
-d4 50       	clrf r0
-d5 50       	tstl r0
-d6 50       	incl r0
-d7 50       	decl r0
-d8 50 51    	adwc r0,r1
-d9 50 51    	sbwc r0,r1
-da 50 51    	mtpr r0,r1
-db 50 51    	mfpr r0,r1
-dc 50       	movpsl r0
-dd 50       	pushl r0
-de 50 51    	moval r0,r1
-df 50       	pushal r0
-e0 50 51 52 	bbs r0,r1,0x56
-e1 50 51 52 	bbc r0,r1,0x56
-e2 50 51 52 	bbss r0,r1,0x56
-e3 50 51 52 	bbcs r0,r1,0x56
-e4 50 51 52 	bbsc r0,r1,0x56
-e5 50 51 52 	bbcc r0,r1,0x56
-e6 50 51 52 	bbssi r0,r1,0x56
-e7 50 51 52 	bbcci r0,r1,0x56
-e8 50 51    	blbs r0,0x54
-e9 50 51    	blbc r0,0x54
-ea 50 51 52 	ffs r0,r1,r2,r3
-eb 50 51 52 	ffc r0,r1,r2,r3
-ec 50 51 52 	cmpv r0,r1,r2,r3
-ed 50 51 52 	cmpzv r0,r1,r2,r3
-ee 50 51 52 	extv r0,r1,r2,r3
-ef 50 51 52 	extzv r0,r1,r2,r3
-f0 50 51 52 	insv r0,r1,r2,r3
-f1 50 51 52 	acbl r0,r1,r2,0x5459
-f2 50 51 52 	aoblss r0,r1,0x56
-f3 50 51 52 	aobleq r0,r1,0x56
-f4 50 51    	sobgeq r0,0x54
-f5 50 51    	sobgtr r0,0x54
-f6 50 51    	cvtlb r0,r1
-f7 50 51    	cvtlw r0,r1
-f8 50 51 52 	ashp r0,r1,r2,r3,r4,r5
-f9 50 51 52 	cvtlp r0,r1,r2
-fa 50 51    	callg r0,r1
-fb 50 51    	calls r0,r1
+08 8f 50 51 	cvtps $0x5150,r2,r3,r4
+09 8f 50 51 	cvtsp $0x5150,r2,r3,r4
+0a 8f 50 51 	index $0x53525150,r4,r5,r6,r7,r8
+0b 8f 50 51 	crc $0x50,r1,r2,r3
+0c 8f 50 51 	prober $0x50,r1,r2
+0d 8f 50 51 	probew $0x50,r1,r2
+0e 8f 50 51 	insque $0x50,r1
+0f 8f 50 51 	remque $0x50,r1
+10 8f       	bsbb 0xffffff91
+11 8f       	brb 0xffffff91
+12 8f       	bneq 0xffffff91
+13 8f       	beql 0xffffff91
+14 8f       	bgtr 0xffffff91
+15 8f       	bleq 0xffffff91
+16 8f 50    	jsb $0x50
+17 8f 50    	jmp $0x50
+18 8f       	bgeq 0xffffff91
+19 8f       	blss 0xffffff91
+1a 8f       	bgtru 0xffffff91
+1b 8f       	blequ 0xffffff91
+1c 8f       	bvc 0xffffff91
+1d 8f       	bvs 0xffffff91
+1e 8f       	bcc 0xffffff91
+1f 8f       	blssu 0xffffff91
+20 8f 50 51 	addp4 $0x5150,r2,r3,r4
+21 8f 50 51 	addp6 $0x5150,r2,r3,r4,r5,r6
+22 8f 50 51 	subp4 $0x5150,r2,r3,r4
+23 8f 50 51 	subp6 $0x5150,r2,r3,r4,r5,r6
+24 8f 50 51 	cvtpt $0x5150,r2,r3,r4,r5
+25 8f 50 51 	mulp $0x5150,r2,r3,r4,r5,r6
+26 8f 50 51 	cvttp $0x5150,r2,r3,r4,r5
+27 8f 50 51 	divp $0x5150,r2,r3,r4,r5,r6
+28 8f 50 51 	movc3 $0x5150,r2,r3
+29 8f 50 51 	cmpc3 $0x5150,r2,r3
+2a 8f 50 51 	scanc $0x5150,r2,r3,r4
+2b 8f 50 51 	spanc $0x5150,r2,r3,r4
+2c 8f 50 51 	movc5 $0x5150,r2,r3,r4,r5
+2d 8f 50 51 	cmpc5 $0x5150,r2,r3,r4,r5
+2e 8f 50 51 	movtc $0x5150,r2,r3,r4,r5,r6
+2f 8f 50 51 	movtuc $0x5150,r2,r3,r4,r5,r6
+30 8f 50    	bsbw 0x5092
+31 8f 50    	brw 0x5092
+32 8f 50 51 	cvtwl $0x5150,r2
+33 8f 50 51 	cvtwb $0x5150,r2
+34 8f 50 51 	movp $0x5150,r2,r3
+35 8f 50 51 	cmpp3 $0x5150,r2,r3
+36 8f 50 51 	cvtpl $0x5150,r2,r3
+37 8f 50 51 	cmpp4 $0x5150,r2,r3,r4
+38 8f 50 51 	editpc $0x5150,r2,r3,r4
+39 8f 50 51 	matchc $0x5150,r2,r3,r4
+3a 8f 50 51 	locc $0x50,r1,r2
+3b 8f 50 51 	skpc $0x50,r1,r2
+3c 8f 50 51 	movzwl $0x5150,r2
+3d 8f 50 51 	acbw $0x5150,r2,r3,0x555c
+3e 8f 50 51 	movaw $0x5150,r2
+3f 8f 50 51 	pushaw $0x5150
+40 8f 50 51 	addf2 $0x53525150 [f-float],r4
+41 8f 50 51 	addf3 $0x53525150 [f-float],r4,r5
+42 8f 50 51 	subf2 $0x53525150 [f-float],r4
+43 8f 50 51 	subf3 $0x53525150 [f-float],r4,r5
+44 8f 50 51 	mulf2 $0x53525150 [f-float],r4
+45 8f 50 51 	mulf3 $0x53525150 [f-float],r4,r5
+46 8f 50 51 	divf2 $0x53525150 [f-float],r4
+47 8f 50 51 	divf3 $0x53525150 [f-float],r4,r5
+48 8f 50 51 	cvtfb $0x53525150 [f-float],r4
+49 8f 50 51 	cvtfw $0x53525150 [f-float],r4
+4a 8f 50 51 	cvtfl $0x53525150 [f-float],r4
+4b 8f 50 51 	cvtrfl $0x53525150 [f-float],r4
+4c 8f 50 51 	cvtbf $0x50,r1
+4d 8f 50 51 	cvtwf $0x5150,r2
+4e 8f 50 51 	cvtlf $0x53525150,r4
+4f 8f 50 51 	acbf $0x53525150 [f-float],r4,r5,0x5760
+50 8f 50 51 	movf $0x53525150 [f-float],r4
+51 8f 50 51 	cmpf $0x53525150 [f-float],r4
+52 8f 50 51 	mnegf $0x53525150 [f-float],r4
+53 8f 50 51 	tstf $0x53525150 [f-float]
+54 8f 50 51 	emodf $0x53525150 [f-float],r4,r5,r6,r7
+55 8f 50 51 	polyf $0x53525150 [f-float],r4,r5
+56 8f 50 51 	cvtfd $0x53525150 [f-float],r4
+57 8f       	.word 0x578f
+58 8f 50 51 	adawi $0x5150,r2
+59 8f       	.word 0x598f
+5a 8f       	.word 0x5a8f
+5b 8f       	.word 0x5b8f
+5c 8f 50 51 	insqhi $0x50,r1
+5d 8f 50 51 	insqti $0x50,r1
+5e 8f 50 51 	remqhi $0x5756555453525150,r8
+5f 8f 50 51 	remqti $0x5756555453525150,r8
+60 8f 50 51 	addd2 $0x5756555453525150 [d-float],r8
+61 8f 50 51 	addd3 $0x5756555453525150 [d-float],r8,r9
+62 8f 50 51 	subd2 $0x5756555453525150 [d-float],r8
+63 8f 50 51 	subd3 $0x5756555453525150 [d-float],r8,r9
+64 8f 50 51 	muld2 $0x5756555453525150 [d-float],r8
+65 8f 50 51 	muld3 $0x5756555453525150 [d-float],r8,r9
+66 8f 50 51 	divd2 $0x5756555453525150 [d-float],r8
+67 8f 50 51 	divd3 $0x5756555453525150 [d-float],r8,r9
+68 8f 50 51 	cvtdb $0x5756555453525150 [d-float],r8
+69 8f 50 51 	cvtdw $0x5756555453525150 [d-float],r8
+6a 8f 50 51 	cvtdl $0x5756555453525150 [d-float],r8
+6b 8f 50 51 	cvtrdl $0x5756555453525150 [d-float],r8
+6c 8f 50 51 	cvtbd $0x50,r1
+6d 8f 50 51 	cvtwd $0x5150,r2
+6e 8f 50 51 	cvtld $0x53525150,r4
+6f 8f 50 51 	acbd $0x5756555453525150 [d-float],r8,r9,0x5b68
+70 8f 50 51 	movd $0x5756555453525150 [d-float],r8
+71 8f 50 51 	cmpd $0x5756555453525150 [d-float],r8
+72 8f 50 51 	mnegd $0x5756555453525150 [d-float],r8
+73 8f 50 51 	tstd $0x5756555453525150 [d-float]
+74 8f 50 51 	emodd $0x5756555453525150 [d-float],r8,r9,r10,r11
+75 8f 50 51 	polyd $0x5756555453525150 [d-float],r8,r9
+76 8f 50 51 	cvtdf $0x5756555453525150 [d-float],r8
+77 8f       	.word 0x778f
+78 8f 50 51 	ashl $0x50,r1,r2
+79 8f 50 51 	ashq $0x50,r1,r2
+7a 8f 50 51 	emul $0x53525150,r4,r5,r6
+7b 8f 50 51 	ediv $0x53525150,r4,r5,r6
+7c 8f 50 51 	clrd $0x5756555453525150 [d-float]
+7d 8f 50 51 	movq $0x5756555453525150,r8
+7e 8f 50 51 	movaq $0x5756555453525150,r8
+7f 8f 50 51 	pushaq $0x5756555453525150
+80 8f 50 51 	addb2 $0x50,r1
+81 8f 50 51 	addb3 $0x50,r1,r2
+82 8f 50 51 	subb2 $0x50,r1
+83 8f 50 51 	subb3 $0x50,r1,r2
+84 8f 50 51 	mulb2 $0x50,r1
+85 8f 50 51 	mulb3 $0x50,r1,r2
+86 8f 50 51 	divb2 $0x50,r1
+87 8f 50 51 	divb3 $0x50,r1,r2
+88 8f 50 51 	bisb2 $0x50,r1
+89 8f 50 51 	bisb3 $0x50,r1,r2
+8a 8f 50 51 	bicb2 $0x50,r1
+8b 8f 50 51 	bicb3 $0x50,r1,r2
+8c 8f 50 51 	xorb2 $0x50,r1
+8d 8f 50 51 	xorb3 $0x50,r1,r2
+8e 8f 50 51 	mnegb $0x50,r1
+8f 8f 50 51 	caseb $0x50,r1,r2
+90 8f 50 51 	movb $0x50,r1
+91 8f 50 51 	cmpb $0x50,r1
+92 8f 50 51 	mcomb $0x50,r1
+93 8f 50 51 	bitb $0x50,r1
+94 8f 50    	clrb $0x50
+95 8f 50    	tstb $0x50
+96 8f 50    	incb $0x50
+97 8f 50    	decb $0x50
+98 8f 50 51 	cvtbl $0x50,r1
+99 8f 50 51 	cvtbw $0x50,r1
+9a 8f 50 51 	movzbl $0x50,r1
+9b 8f 50 51 	movzbw $0x50,r1
+9c 8f 50 51 	rotl $0x50,r1,r2
+9d 8f 50 51 	acbb $0x50,r1,r2,0x545a
+9e 8f 50 51 	movab $0x50,r1
+9f 8f 50    	pushab $0x50
+a0 8f 50 51 	addw2 $0x5150,r2
+a1 8f 50 51 	addw3 $0x5150,r2,r3
+a2 8f 50 51 	subw2 $0x5150,r2
+a3 8f 50 51 	subw3 $0x5150,r2,r3
+a4 8f 50 51 	mulw2 $0x5150,r2
+a5 8f 50 51 	mulw3 $0x5150,r2,r3
+a6 8f 50 51 	divw2 $0x5150,r2
+a7 8f 50 51 	divw3 $0x5150,r2,r3
+a8 8f 50 51 	bisw2 $0x5150,r2
+a9 8f 50 51 	bisw3 $0x5150,r2,r3
+aa 8f 50 51 	bicw2 $0x5150,r2
+ab 8f 50 51 	bicw3 $0x5150,r2,r3
+ac 8f 50 51 	xorw2 $0x5150,r2
+ad 8f 50 51 	xorw3 $0x5150,r2,r3
+ae 8f 50 51 	mnegw $0x5150,r2
+af 8f 50 51 	casew $0x5150,r2,r3
+b0 8f 50 51 	movw $0x5150,r2
+b1 8f 50 51 	cmpw $0x5150,r2
+b2 8f 50 51 	mcomw $0x5150,r2
+b3 8f 50 51 	bitw $0x5150,r2
+b4 8f 50 51 	clrw $0x5150
+b5 8f 50 51 	tstw $0x5150
+b6 8f 50 51 	incw $0x5150
+b7 8f 50 51 	decw $0x5150
+b8 8f 50 51 	bispsw $0x5150
+b9 8f 50 51 	bicpsw $0x5150
+ba 8f 50 51 	popr $0x5150
+bb 8f 50 51 	pushr $0x5150
+bc 8f 50 51 	chmk $0x5150
+bd 8f 50 51 	chme $0x5150
+be 8f 50 51 	chms $0x5150
+bf 8f 50 51 	chmu $0x5150
+c0 8f 50 51 	addl2 $0x53525150,r4
+c1 8f 50 51 	addl3 $0x53525150,r4,r5
+c2 8f 50 51 	subl2 $0x53525150,r4
+c3 8f 50 51 	subl3 $0x53525150,r4,r5
+c4 8f 50 51 	mull2 $0x53525150,r4
+c5 8f 50 51 	mull3 $0x53525150,r4,r5
+c6 8f 50 51 	divl2 $0x53525150,r4
+c7 8f 50 51 	divl3 $0x53525150,r4,r5
+c8 8f 50 51 	bisl2 $0x53525150,r4
+c9 8f 50 51 	bisl3 $0x53525150,r4,r5
+ca 8f 50 51 	bicl2 $0x53525150,r4
+cb 8f 50 51 	bicl3 $0x53525150,r4,r5
+cc 8f 50 51 	xorl2 $0x53525150,r4
+cd 8f 50 51 	xorl3 $0x53525150,r4,r5
+ce 8f 50 51 	mnegl $0x53525150,r4
+cf 8f 50 51 	casel $0x53525150,r4,r5
+d0 8f 50 51 	movl $0x53525150,r4
+d1 8f 50 51 	cmpl $0x53525150,r4
+d2 8f 50 51 	mcoml $0x53525150,r4
+d3 8f 50 51 	bitl $0x53525150,r4
+d4 8f 50 51 	clrf $0x53525150 [f-float]
+d5 8f 50 51 	tstl $0x53525150
+d6 8f 50 51 	incl $0x53525150
+d7 8f 50 51 	decl $0x53525150
+d8 8f 50 51 	adwc $0x53525150,r4
+d9 8f 50 51 	sbwc $0x53525150,r4
+da 8f 50 51 	mtpr $0x53525150,r4
+db 8f 50 51 	mfpr $0x53525150,r4
+dc 8f 50 51 	movpsl $0x53525150
+dd 8f 50 51 	pushl $0x53525150
+de 8f 50 51 	moval $0x53525150,r4
+df 8f 50 51 	pushal $0x53525150
+e0 8f 50 51 	bbs $0x53525150,r4,0x5d
+e1 8f 50 51 	bbc $0x53525150,r4,0x5d
+e2 8f 50 51 	bbss $0x53525150,r4,0x5d
+e3 8f 50 51 	bbcs $0x53525150,r4,0x5d
+e4 8f 50 51 	bbsc $0x53525150,r4,0x5d
+e5 8f 50 51 	bbcc $0x53525150,r4,0x5d
+e6 8f 50 51 	bbssi $0x53525150,r4,0x5d
+e7 8f 50 51 	bbcci $0x53525150,r4,0x5d
+e8 8f 50 51 	blbs $0x53525150,0x5b
+e9 8f 50 51 	blbc $0x53525150,0x5b
+ea 8f 50 51 	ffs $0x53525150,r4,r5,r6
+eb 8f 50 51 	ffc $0x53525150,r4,r5,r6
+ec 8f 50 51 	cmpv $0x53525150,r4,r5,r6
+ed 8f 50 51 	cmpzv $0x53525150,r4,r5,r6
+ee 8f 50 51 	extv $0x53525150,r4,r5,r6
+ef 8f 50 51 	extzv $0x53525150,r4,r5,r6
+f0 8f 50 51 	insv $0x53525150,r4,r5,r6
+f1 8f 50 51 	acbl $0x53525150,r4,r5,0x5760
+f2 8f 50 51 	aoblss $0x53525150,r4,0x5d
+f3 8f 50 51 	aobleq $0x53525150,r4,0x5d
+f4 8f 50 51 	sobgeq $0x53525150,0x5b
+f5 8f 50 51 	sobgtr $0x53525150,0x5b
+f6 8f 50 51 	cvtlb $0x53525150,r4
+f7 8f 50 51 	cvtlw $0x53525150,r4
+f8 8f 50 51 	ashp $0x50,r1,r2,r3,r4,r5
+f9 8f 50 51 	cvtlp $0x53525150,r4,r5
+fa 8f 50 51 	callg $0x50,r1
+fb 8f 50 51 	calls $0x53525150,r4
 fc          	xfc
 fd 00       	.word 0xfd00
 fd 01       	.word 0xfd01
@@ -301,8 +301,8 @@ fd 2e       	.word 0xfd2e
 fd 2f       	.word 0xfd2f
 fd 30       	.word 0xfd30
 fd 31       	.word 0xfd31
-fd 32 50 51 	cvtdh r0,r1
-fd 33 50 51 	cvtgf r0,r1
+fd 32 8f 50 	cvtdh $0x5756555453525150 [d-float],r8
+fd 33 8f 50 	cvtgf $0x5756555453525150 [g-float],r8
 fd 34       	.word 0xfd34
 fd 35       	.word 0xfd35
 fd 36       	.word 0xfd36
@@ -315,29 +315,29 @@ fd 3c       	.word 0xfd3c
 fd 3d       	.word 0xfd3d
 fd 3e       	.word 0xfd3e
 fd 3f       	.word 0xfd3f
-fd 40 50 51 	addg2 r0,r1
-fd 41 50 51 	addg3 r0,r1,r2
-fd 42 50 51 	subg2 r0,r1
-fd 43 50 51 	subg3 r0,r1,r2
-fd 44 50 51 	mulg2 r0,r1
-fd 45 50 51 	mulg3 r0,r1,r2
-fd 46 50 51 	divg2 r0,r1
-fd 47 50 51 	divg3 r0,r1,r2
-fd 48 50 51 	cvtgb r0,r1
-fd 49 50 51 	cvtgw r0,r1
-fd 4a 50 51 	cvtgl r0,r1
-fd 4b 50 51 	cvtrgl r0,r1
-fd 4c 50 51 	cvtbg r0,r1
-fd 4d 50 51 	cvtwg r0,r1
-fd 4e 50 51 	cvtlg r0,r1
-fd 4f 50 51 	acbg r0,r1,r2,0x545a
-fd 50 50 51 	movg r0,r1
-fd 51 50 51 	cmpg r0,r1
-fd 52 50 51 	mnegg r0,r1
-fd 53 50    	tstg r0
-fd 54 50 51 	emodg r0,r1,r2,r3,r4
-fd 55 50 51 	polyg r0,r1,r2
-fd 56 50 51 	cvtgh r0,r1
+fd 40 8f 50 	addg2 $0x5756555453525150 [g-float],r8
+fd 41 8f 50 	addg3 $0x5756555453525150 [g-float],r8,r9
+fd 42 8f 50 	subg2 $0x5756555453525150 [g-float],r8
+fd 43 8f 50 	subg3 $0x5756555453525150 [g-float],r8,r9
+fd 44 8f 50 	mulg2 $0x5756555453525150 [g-float],r8
+fd 45 8f 50 	mulg3 $0x5756555453525150 [g-float],r8,r9
+fd 46 8f 50 	divg2 $0x5756555453525150 [g-float],r8
+fd 47 8f 50 	divg3 $0x5756555453525150 [g-float],r8,r9
+fd 48 8f 50 	cvtgb $0x5756555453525150 [g-float],r8
+fd 49 8f 50 	cvtgw $0x5756555453525150 [g-float],r8
+fd 4a 8f 50 	cvtgl $0x5756555453525150 [g-float],r8
+fd 4b 8f 50 	cvtrgl $0x5756555453525150 [g-float],r8
+fd 4c 8f 50 	cvtbg $0x50,r1
+fd 4d 8f 50 	cvtwg $0x5150,r2
+fd 4e 8f 50 	cvtlg $0x53525150,r4
+fd 4f 8f 50 	acbg $0x5756555453525150 [g-float],r8,r9,0x5b69
+fd 50 8f 50 	movg $0x5756555453525150 [g-float],r8
+fd 51 8f 50 	cmpg $0x5756555453525150 [g-float],r8
+fd 52 8f 50 	mnegg $0x5756555453525150 [g-float],r8
+fd 53 8f 50 	tstg $0x5756555453525150 [g-float]
+fd 54 8f 50 	emodg $0x5756555453525150 [g-float],r8,r9,r10,r11
+fd 55 8f 50 	polyg $0x5756555453525150 [g-float],r8,r9
+fd 56 8f 50 	cvtgh $0x5756555453525150 [g-float],r8
 fd 57       	.word 0xfd57
 fd 58       	.word 0xfd58
 fd 59       	.word 0xfd59
@@ -347,38 +347,38 @@ fd 5c       	.word 0xfd5c
 fd 5d       	.word 0xfd5d
 fd 5e       	.word 0xfd5e
 fd 5f       	.word 0xfd5f
-fd 60 50 51 	addh2 r0,r1
-fd 61 50 51 	addh3 r0,r1,r2
-fd 62 50 51 	subh2 r0,r1
-fd 63 50 51 	subh3 r0,r1,r2
-fd 64 50 51 	mulh2 r0,r1
-fd 65 50 51 	mulh3 r0,r1,r2
-fd 66 50 51 	divh2 r0,r1
-fd 67 50 51 	divh3 r0,r1,r2
-fd 68 50 51 	cvthb r0,r1
-fd 69 50 51 	cvthw r0,r1
-fd 6a 50 51 	cvthl r0,r1
-fd 6b 50 51 	cvtrhl r0,r1
-fd 6c 50 51 	cvtbh r0,r1
-fd 6d 50 51 	cvtwh r0,r1
-fd 6e 50 51 	cvtlh r0,r1
-fd 6f 50 51 	acbh r0,r1,r2,0x545a
-fd 70 50 51 	movh r0,r1
-fd 71 50 51 	cmph r0,r1
-fd 72 50 51 	mnegh r0,r1
-fd 73 50    	tsth r0
-fd 74 50 51 	emodh r0,r1,r2,r3,r4
-fd 75 50 51 	polyh r0,r1,r2
-fd 76 50 51 	cvthg r0,r1
+fd 60 8f 50 	addh2 $0x5f5e5d5c5b5a59585756555453525150 [h-float],(r0)
+fd 61 8f 50 	addh3 $0x5f5e5d5c5b5a59585756555453525150 [h-float],(r0),(r1)
+fd 62 8f 50 	subh2 $0x5f5e5d5c5b5a59585756555453525150 [h-float],(r0)
+fd 63 8f 50 	subh3 $0x5f5e5d5c5b5a59585756555453525150 [h-float],(r0),(r1)
+fd 64 8f 50 	mulh2 $0x5f5e5d5c5b5a59585756555453525150 [h-float],(r0)
+fd 65 8f 50 	mulh3 $0x5f5e5d5c5b5a59585756555453525150 [h-float],(r0),(r1)
+fd 66 8f 50 	divh2 $0x5f5e5d5c5b5a59585756555453525150 [h-float],(r0)
+fd 67 8f 50 	divh3 $0x5f5e5d5c5b5a59585756555453525150 [h-float],(r0),(r1)
+fd 68 8f 50 	cvthb $0x5f5e5d5c5b5a59585756555453525150 [h-float],(r0)
+fd 69 8f 50 	cvthw $0x5f5e5d5c5b5a59585756555453525150 [h-float],(r0)
+fd 6a 8f 50 	cvthl $0x5f5e5d5c5b5a59585756555453525150 [h-float],(r0)
+fd 6b 8f 50 	cvtrhl $0x5f5e5d5c5b5a59585756555453525150 [h-float],(r0)
+fd 6c 8f 50 	cvtbh $0x50,r1
+fd 6d 8f 50 	cvtwh $0x5150,r2
+fd 6e 8f 50 	cvtlh $0x53525150,r4
+fd 6f 8f 50 	acbh $0x5f5e5d5c5b5a59585756555453525150 [h-float],(r0),(r1),0x6379
+fd 70 8f 50 	movh $0x5f5e5d5c5b5a59585756555453525150 [h-float],(r0)
+fd 71 8f 50 	cmph $0x5f5e5d5c5b5a59585756555453525150 [h-float],(r0)
+fd 72 8f 50 	mnegh $0x5f5e5d5c5b5a59585756555453525150 [h-float],(r0)
+fd 73 8f 50 	tsth $0x5f5e5d5c5b5a59585756555453525150 [h-float]
+fd 74 8f 50 	emodh $0x5f5e5d5c5b5a59585756555453525150 [h-float],(r0),(r1),(r2),(r3)
+fd 75 8f 50 	polyh $0x5f5e5d5c5b5a59585756555453525150 [h-float],(r0),(r1)
+fd 76 8f 50 	cvthg $0x5f5e5d5c5b5a59585756555453525150 [h-float],(r0)
 fd 77       	.word 0xfd77
 fd 78       	.word 0xfd78
 fd 79       	.word 0xfd79
 fd 7a       	.word 0xfd7a
 fd 7b       	.word 0xfd7b
-fd 7c 50    	clrh r0
-fd 7d 50 51 	movo r0,r1
-fd 7e 50 51 	movah r0,r1
-fd 7f 50    	pushah r0
+fd 7c 8f 50 	clrh $0x5f5e5d5c5b5a59585756555453525150 [h-float]
+fd 7d 8f 50 	movo $0x5f5e5d5c5b5a59585756555453525150,(r0)
+fd 7e 8f 50 	movah $0x5f5e5d5c5b5a59585756555453525150 [h-float],(r0)
+fd 7f 8f 50 	pushah $0x5f5e5d5c5b5a59585756555453525150 [h-float]
 fd 80       	.word 0xfd80
 fd 81       	.word 0xfd81
 fd 82       	.word 0xfd82
@@ -403,8 +403,8 @@ fd 94       	.word 0xfd94
 fd 95       	.word 0xfd95
 fd 96       	.word 0xfd96
 fd 97       	.word 0xfd97
-fd 98 50 51 	cvtfh r0,r1
-fd 99 50 51 	cvtfg r0,r1
+fd 98 8f 50 	cvtfh $0x53525150 [f-float],r4
+fd 99 8f 50 	cvtfg $0x53525150 [f-float],r4
 fd 9a       	.word 0xfd9a
 fd 9b       	.word 0xfd9b
 fd 9c       	.word 0xfd9c
@@ -497,8 +497,8 @@ fd f2       	.word 0xfdf2
 fd f3       	.word 0xfdf3
 fd f4       	.word 0xfdf4
 fd f5       	.word 0xfdf5
-fd f6 50 51 	cvthf r0,r1
-fd f7 50 51 	cvthd r0,r1
+fd f6 8f 50 	cvthf $0x5f5e5d5c5b5a59585756555453525150 [h-float],(r0)
+fd f7 8f 50 	cvthd $0x5f5e5d5c5b5a59585756555453525150 [h-float],(r0)
 fd f8       	.word 0xfdf8
 fd f9       	.word 0xfdf9
 fd fa       	.word 0xfdfa
@@ -1016,6 +1016,6 @@ ff f9       	.word 0xfff9
 ff fa       	.word 0xfffa
 ff fb       	.word 0xfffb
 ff fc       	.word 0xfffc
-ff fd 50    	bugl r0
-ff fe 50    	bugw r0
+ff fd 8f 50 	bugl $0x53525150
+ff fe 8f 50 	bugw $0x5150
 ff ff       	.word 0xffff
