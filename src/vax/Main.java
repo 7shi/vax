@@ -7,26 +7,22 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Paths;
 
-class Disasm {
+class Memory {
 
-    static String[] regs = {
-        "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
-        "r8", "r9", "r10", "r11", "ap", "fp", "sp", "pc"
-    };
-    static String[] isfx = {"b", "w", "l"};
-    static String[] br = {
-        "bneq", "beql", "bgtr", "bleq", "", "",
-        "bgeq", "blss", "bgtru", "blequ", "bvc", "bvs", "bcc", "bcs"};
+    protected final byte[] text;
+    protected final ByteBuffer buf;
+    protected int pc;
 
-    byte[] text;
-    ByteBuffer buf;
-    int pc;
+    public Memory(String path) throws IOException {
+        text = java.nio.file.Files.readAllBytes(Paths.get(path));
+        buf = ByteBuffer.wrap(text).order(ByteOrder.LITTLE_ENDIAN);
+    }
 
-    int fetch() {
+    public int fetch() {
         return Byte.toUnsignedInt(text[pc++]);
     }
 
-    int fetch(int n) {
+    public int fetch(int n) {
         int ret = 0;
         switch (n) {
             case 0:
@@ -44,7 +40,7 @@ class Disasm {
         return ret;
     }
 
-    int fetchSigned(int n) {
+    public int fetchSigned(int n) {
         int ret = 0;
         switch (n) {
             case 0:
@@ -61,10 +57,26 @@ class Disasm {
         }
         return ret;
     }
+}
+
+class Disasm extends Memory {
+
+    public static final String[] REGS = {
+        "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
+        "r8", "r9", "r10", "r11", "ap", "fp", "sp", "pc"
+    };
+    public static final String[] ISFX = {"b", "w", "l"};
+    public static final String[] BR = {
+        "bneq", "beql", "bgtr", "bleq", "", "",
+        "bgeq", "blss", "bgtru", "blequ", "bvc", "bvs", "bcc", "bcs"};
+
+    public Disasm(String path) throws IOException {
+        super(path);
+    }
 
     String getOpr(int n) {
         int b = fetch(), b1 = b >> 4, b2 = b & 15;
-        String r = regs[b2];
+        String r = REGS[b2];
         switch (b1) {
             case 0:
             case 1:
@@ -114,7 +126,7 @@ class Disasm {
         StringBuilder sb = new StringBuilder();
         sb.append(mne);
         if (sfx1) {
-            sb.append(isfx[n]);
+            sb.append(ISFX[n]);
         }
         if (sfx2) {
             sb.append(count);
@@ -211,7 +223,7 @@ class Disasm {
             case 0x1e:
             case 0x1f: {
                 int rel = fetchSigned(0);
-                return String.format("%s 0x%x", br[b - 0x12], pc + rel);
+                return String.format("%s 0x%x", BR[b - 0x12], pc + rel);
             }
             case 0x16:
                 return op(1, 2, "jsb", false, false);
@@ -258,11 +270,6 @@ class Disasm {
                 out.printf("%02x ", text[pc2 + i]);
             }
         }
-    }
-
-    public Disasm(String path) throws IOException {
-        text = java.nio.file.Files.readAllBytes(Paths.get(path));
-        buf = ByteBuffer.wrap(text).order(ByteOrder.LITTLE_ENDIAN);
     }
 }
 
