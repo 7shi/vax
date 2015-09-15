@@ -9,15 +9,15 @@ import java.nio.file.Paths;
 
 enum VAXType {
 
-    BYTE, WORD, LONG, QWORD, OWORD,
+    NONE, BYTE, WORD, LONG, QWORD, OWORD,
     FFLOAT, DFLOAT, GFLOAT, HFLOAT
 }
 
 class VAX {
 
-    private static final int[] typeLen = {1, 2, 4, 8, 16, 4, 8, 8, 16};
+    private static final int[] typeLen = {0, 1, 2, 4, 8, 16, 4, 8, 8, 16};
     private static final String[] typeSfx = {
-        "", "", "", "", "",
+        "", "", "", "", "", "",
         " [f-float]", " [d-float]", " [g-float]", " [h-float]"
     };
     private static final VAXType[] opType = {
@@ -46,7 +46,7 @@ class Memory {
 
     protected final byte[] text;
     protected final ByteBuffer buf;
-    protected int pc;
+    public int pc;
 
     public Memory(String path) throws IOException {
         text = java.nio.file.Files.readAllBytes(Paths.get(path));
@@ -75,17 +75,17 @@ class Memory {
         return ret;
     }
 
-    public int fetchSigned(int n) {
+    public int fetchSigned(VAXType t) {
         int ret = 0;
-        switch (n) {
-            case 0:
+        switch (t) {
+            case BYTE:
                 ret = text[pc++];
                 break;
-            case 1:
+            case WORD:
                 ret = buf.getShort(pc);
                 pc += 2;
                 break;
-            case 2:
+            case LONG:
                 ret = buf.getInt(pc);
                 pc += 4;
                 break;
@@ -134,13 +134,16 @@ class Memory {
 
 class Disasm extends Memory {
 
-    public static final String[] REGS = {
+    private static final String[] REGS = {
         "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
         "r8", "r9", "r10", "r11", "ap", "fp", "sp", "pc"
     };
-    public static final String[] BR = {
+    private static final String[] BR = {
         "bneq", "beql", "bgtr", "bleq", "", "",
         "bgeq", "blss", "bgtru", "blequ", "bvc", "bvs", "bcc", "bcs"
+    };
+    private static final VAXType[] atype = {
+        VAXType.BYTE, VAXType.WORD, VAXType.LONG
     };
 
     public Disasm(String path) throws IOException {
@@ -180,7 +183,7 @@ class Disasm extends Memory {
             case 0xe:
             case 0xf: {
                 String prefix = (b1 & 1) == 1 ? "*" : "";
-                int disp = fetchSigned((b1 - 0xa) >> 1);
+                int disp = fetchSigned(atype[(b1 - 0xa) >> 1]);
                 if (b2 == 15) {
                     return String.format("%s0x%x", prefix, pc + disp);
                 } else if (disp == 0) {
@@ -294,7 +297,7 @@ class Disasm extends Memory {
             case 0x1d:
             case 0x1e:
             case 0x1f: {
-                int rel = fetchSigned(0);
+                int rel = fetchSigned(VAXType.BYTE);
                 return String.format("%s 0x%x", BR[b - 0x12], pc + rel);
             }
             case 0x16:
