@@ -106,6 +106,30 @@ class Memory {
         sb.append(VAX.getValueSuffix(t));
         return sb.toString();
     }
+
+    public void output(PrintStream out, int pc, int len, String asm) {
+        for (int i = 0;; ++i) {
+            if (i == len) {
+                if (i <= 4) {
+                    for (; i < 4; ++i) {
+                        out.print("   ");
+                    }
+                    out.printf("\t%s", asm);
+                }
+                out.println();
+                break;
+            } else if ((i & 3) == 0) {
+                if (i == 4) {
+                    out.printf("\t%s", asm);
+                }
+                if (i > 0) {
+                    out.println();
+                }
+                out.printf("%8x:\t", pc + i);
+            }
+            out.printf("%02x ", text[pc + i]);
+        }
+    }
 }
 
 class Disasm extends Memory {
@@ -294,29 +318,9 @@ class Disasm extends Memory {
 
     void disasm(PrintStream out) {
         while (pc < text.length) {
-            int pc2 = pc;
+            int oldpc = pc;
             String asm = disasm1();
-            for (int i = 0;; ++i) {
-                if (pc2 + i == pc) {
-                    if (i <= 4) {
-                        for (; i < 4; ++i) {
-                            out.print("   ");
-                        }
-                        out.printf("\t%s", asm);
-                    }
-                    out.println();
-                    break;
-                } else if ((i & 3) == 0) {
-                    if (i == 4) {
-                        out.printf("\t%s", asm);
-                    }
-                    if (i > 0) {
-                        out.println();
-                    }
-                    out.printf("%8x:\t", pc2 + i);
-                }
-                out.printf("%02x ", text[pc2 + i]);
-            }
+            output(out, oldpc, pc - oldpc, asm);
         }
     }
 }
