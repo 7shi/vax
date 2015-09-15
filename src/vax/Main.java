@@ -7,6 +7,41 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Paths;
 
+enum VAXType {
+
+    BYTE, WORD, LONG, QWORD, OWORD,
+    FFLOAT, DFLOAT, GFLOAT, HFLOAT
+}
+
+class VAX {
+
+    private static final int[] typeLen = {1, 2, 4, 8, 16, 4, 8, 8, 16};
+    private static final String[] typeSfx = {
+        "", "", "", "", "",
+        " [f-float]", " [d-float]", " [g-float]", " [h-float]"
+    };
+    private static final VAXType[] opType = {
+        VAXType.FFLOAT, VAXType.DFLOAT,
+        VAXType.BYTE, VAXType.WORD, VAXType.LONG
+    };
+
+    public static int getLength(VAXType t) {
+        return typeLen[t.ordinal()];
+    }
+
+    public static String getValueSuffix(VAXType t) {
+        return typeSfx[t.ordinal()];
+    }
+
+    public static String getSuffix(VAXType t) {
+        return t.toString().substring(0, 1).toLowerCase();
+    }
+
+    public static VAXType fromOp(int op) {
+        return opType[(op - 0x40) >> 5];
+    }
+}
+
 class Memory {
 
     protected final byte[] text;
@@ -57,6 +92,20 @@ class Memory {
         }
         return ret;
     }
+
+    public String fetchHex(VAXType t) {
+        int len = VAX.getLength(t);
+        int[] bs = new int[len];
+        for (int i = 0; i < len; ++i) {
+            bs[i] = fetch();
+        }
+        StringBuilder sb = new StringBuilder("0x");
+        for (int i = len - 1; i >= 0; --i) {
+            sb.append(String.format("%02x", bs[i]));
+        }
+        sb.append(VAX.getValueSuffix(t));
+        return sb.toString();
+    }
 }
 
 class Disasm extends Memory {
@@ -65,7 +114,6 @@ class Disasm extends Memory {
         "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
         "r8", "r9", "r10", "r11", "ap", "fp", "sp", "pc"
     };
-    public static final String[] ISFX = {"b", "w", "l"};
     public static final String[] BR = {
         "bneq", "beql", "bgtr", "bleq", "", "",
         "bgeq", "blss", "bgtru", "blequ", "bvc", "bvs", "bcc", "bcs"
@@ -75,7 +123,7 @@ class Disasm extends Memory {
         super(path);
     }
 
-    String getOpr(int n) {
+    String getOpr(VAXType t) {
         int b = fetch(), b1 = b >> 4, b2 = b & 15;
         String r = REGS[b2];
         switch (b1) {
@@ -85,7 +133,7 @@ class Disasm extends Memory {
             case 3:
                 return String.format("$0x%x", b);
             case 4:
-                return getOpr(2) + "[" + r + "]";
+                return getOpr(VAXType.LONG) + "[" + r + "]";
             case 5:
                 return r;
             case 6:
@@ -96,8 +144,7 @@ class Disasm extends Memory {
             case 9: {
                 String prefix = (b1 & 1) == 1 ? "@" : "";
                 if (b2 == 15) {
-                    String f = "$0x%0" + (1 << n) + "x";
-                    return prefix + String.format(f, fetch(n));
+                    return prefix + fetchHex(t);
                 } else {
                     return prefix + "(" + r + ")+";
                 }
@@ -123,11 +170,11 @@ class Disasm extends Memory {
         }
     }
 
-    String op(int count, int n, String mne, boolean sfx1, boolean sfx2) {
+    String op(int count, VAXType t, String mne, boolean sfx1, boolean sfx2) {
         StringBuilder sb = new StringBuilder();
         sb.append(mne);
         if (sfx1) {
-            sb.append(ISFX[n]);
+            sb.append(VAX.getSuffix(t));
         }
         if (sfx2) {
             sb.append(count);
@@ -137,14 +184,14 @@ class Disasm extends Memory {
             if (i > 0) {
                 sb.append(",");
             }
-            sb.append(getOpr(n));
+            sb.append(getOpr(t));
         }
         return sb.toString();
     }
 
     String opi23(int b, String mne) {
         int c = (b & 1) + 2;
-        return op(c, (b - 0x80) >> 5, mne, true, true);
+        return op(c, VAX.fromOp(b), mne, true, true);
     }
 
     String disasm1() {
@@ -210,7 +257,7 @@ class Disasm extends Memory {
             case 0x90:
             case 0xb0:
             case 0xd0:
-                return op(2, (b - 0x90) >> 5, "mov", true, false);
+                return op(2, VAX.fromOp(b), "mov", true, false);
             case 0x12:
             case 0x13:
             case 0x14:
@@ -227,19 +274,19 @@ class Disasm extends Memory {
                 return String.format("%s 0x%x", BR[b - 0x12], pc + rel);
             }
             case 0x16:
-                return op(1, 2, "jsb", false, false);
+                return op(1, VAXType.WORD, "jsb", false, false);
             case 0x17:
-                return op(1, 2, "jmp", false, false);
+                return op(1, VAXType.WORD, "jmp", false, false);
             case 0xfb:
-                return op(2, 2, "calls", false, false);
+                return op(2, VAXType.WORD, "calls", false, false);
             case 0x98:
-                return op(2, 0, "cvtbl", false, false);
+                return op(2, VAXType.BYTE, "cvtbl", false, false);
             case 0x99:
-                return op(2, 0, "cvtbw", false, false);
+                return op(2, VAXType.BYTE, "cvtbw", false, false);
             case 0xdd:
-                return op(1, 2, "push", true, false);
+                return op(1, VAXType.WORD, "push", true, false);
             case 0xdf:
-                return op(1, 2, "pusha", true, false);
+                return op(1, VAXType.WORD, "pusha", true, false);
             default:
                 return "???";
         }
