@@ -68,7 +68,8 @@ class Disasm extends Memory {
     public static final String[] ISFX = {"b", "w", "l"};
     public static final String[] BR = {
         "bneq", "beql", "bgtr", "bleq", "", "",
-        "bgeq", "blss", "bgtru", "blequ", "bvc", "bvs", "bcc", "bcs"};
+        "bgeq", "blss", "bgtru", "blequ", "bvc", "bvs", "bcc", "bcs"
+    };
 
     public Disasm(String path) throws IOException {
         super(path);
