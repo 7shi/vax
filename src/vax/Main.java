@@ -2,6 +2,7 @@
 package vax;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Paths;
@@ -231,7 +232,7 @@ class Disasm {
         }
     }
 
-    void disasm() {
+    void disasm(PrintStream out) {
         while (pc < text.length) {
             int pc2 = pc;
             String asm = disasm1();
@@ -239,22 +240,22 @@ class Disasm {
                 if (pc2 + i == pc) {
                     if (i <= 4) {
                         for (; i < 4; ++i) {
-                            System.out.print("   ");
+                            out.print("   ");
                         }
-                        System.out.printf("\t%s", asm);
+                        out.printf("\t%s", asm);
                     }
-                    System.out.println();
+                    out.println();
                     break;
                 } else if ((i & 3) == 0) {
                     if (i == 4) {
-                        System.out.printf("\t%s", asm);
+                        out.printf("\t%s", asm);
                     }
                     if (i > 0) {
-                        System.out.println();
+                        out.println();
                     }
-                    System.out.printf("%8x:\t", pc2 + i);
+                    out.printf("%8x:\t", pc2 + i);
                 }
-                System.out.printf("%02x ", text[pc2 + i]);
+                out.printf("%02x ", text[pc2 + i]);
             }
         }
     }
@@ -270,7 +271,7 @@ public class Main {
     public static void main(String[] args) {
         try {
             //new Disasm("samples/unix.text").disasm();
-            new Disasm("samples/echo.text").disasm();
+            new Disasm("samples/echo.text").disasm(System.out);
         } catch (Exception ex) {
             ex.printStackTrace(System.out);
         }
