@@ -5,8 +5,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Paths;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 class Disasm {
 
@@ -273,8 +271,8 @@ public class Main {
         try {
             //new Disasm("samples/unix.text").disasm();
             new Disasm("samples/echo.text").disasm();
-        } catch (IOException ex) {
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (Exception ex) {
+            ex.printStackTrace(System.out);
         }
     }
 }
