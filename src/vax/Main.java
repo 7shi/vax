@@ -73,6 +73,7 @@ class Memory {
     }
 
     public void output(PrintStream out, int pc, int len, String asm) {
+        String fmt = text.length < 0x1000 ? "%4x:\t" : "%8x:\t";
         for (int i = 0;; ++i) {
             if (i == len) {
                 if (i <= 4) {
@@ -90,7 +91,7 @@ class Memory {
                 if (i > 0) {
                     out.println();
                 }
-                out.printf("%8x:\t", pc + i);
+                out.printf(fmt, pc + i);
             }
             out.printf("%02x ", text[pc + i]);
         }
@@ -115,6 +116,10 @@ class VAX {
         VAXType.BYTE, VAXType.WORD, VAXType.LONG
     };
 
+    public static VAXType fromOp(int op) {
+        return opType[(op - 0x40) >> 5];
+    }
+
     public static int getLength(VAXType t) {
         return typeLen[t.ordinal()];
     }
@@ -127,8 +132,29 @@ class VAX {
         return t.toString().substring(0, 1).toLowerCase();
     }
 
-    public static VAXType fromOp(int op) {
-        return opType[(op - 0x40) >> 5];
+    public static VAXType fromSuffix(char ch) {
+        switch (ch) {
+            case 'b':
+                return VAXType.BYTE;
+            case 'w':
+                return VAXType.WORD;
+            case 'l':
+                return VAXType.LONG;
+            case 'q':
+                return VAXType.QWORD;
+            case 'o':
+                return VAXType.OWORD;
+            case 'f':
+                return VAXType.FFLOAT;
+            case 'd':
+                return VAXType.DFLOAT;
+            case 'g':
+                return VAXType.GFLOAT;
+            case 'h':
+                return VAXType.HFLOAT;
+            default:
+                return VAXType.NONE;
+        }
     }
 }
 
@@ -137,6 +163,7 @@ class VAXOp {
     private final String mne;
     private final VAXType type, rel;
     private final int count;
+    private final boolean cvt;
 
     public VAXOp(String mne) {
         this(mne, VAXType.NONE, 0);
@@ -147,10 +174,15 @@ class VAXOp {
     }
 
     public VAXOp(String mne, VAXType type, int count, VAXType rel) {
+        this(mne, type, count, rel, false);
+    }
+
+    public VAXOp(String mne, VAXType type, int count, VAXType rel, boolean cvt) {
         this.mne = mne;
         this.type = type;
         this.count = count;
         this.rel = rel;
+        this.cvt = cvt;
     }
 
     public String read(Disasm dis) {
@@ -161,8 +193,12 @@ class VAXOp {
         }
         if (rel != VAXType.NONE) {
             sb.append(count == 0 ? " " : ",");
-            int r = dis.fetchSigned(rel);
-            sb.append(String.format("0x%x", dis.pc + r));
+            if (cvt) {
+                sb.append(dis.getOpr(rel));
+            } else {
+                int r = dis.fetchSigned(rel);
+                sb.append(String.format("0x%x", dis.pc + r));
+            }
         }
         return sb.toString();
     }
@@ -170,123 +206,175 @@ class VAXOp {
 
 class VAXOps {
 
-    private static final String[] BR = {
-        "bneq", "beql", "bgtr", "bleq", "", "",
-        "bgeq", "blss", "bgtru", "blequ", "bvc", "bvs", "bcc", "bcs"
+    private static VAXOp op(String mne) {
+        return new VAXOp(mne);
+    }
+
+    private static VAXOp b(String mne, int c) {
+        return new VAXOp(mne, VAXType.BYTE, c);
+    }
+
+    private static VAXOp bw(String mne, int c) {
+        return new VAXOp(mne, VAXType.BYTE, c, VAXType.WORD);
+    }
+
+    private static VAXOp w(String mne, int c) {
+        return new VAXOp(mne, VAXType.WORD, c);
+    }
+
+    private static VAXOp ww(String mne, int c) {
+        return new VAXOp(mne, VAXType.WORD, c, VAXType.WORD);
+    }
+
+    private static VAXOp l(String mne, int c) {
+        return new VAXOp(mne, VAXType.LONG, c);
+    }
+
+    private static VAXOp lb(String mne, int c) {
+        return new VAXOp(mne, VAXType.LONG, c, VAXType.BYTE);
+    }
+
+    private static VAXOp lw(String mne, int c) {
+        return new VAXOp(mne, VAXType.LONG, c, VAXType.WORD);
+    }
+
+    private static VAXOp q(String mne, int c) {
+        return new VAXOp(mne, VAXType.QWORD, c);
+    }
+
+    private static VAXOp o(String mne, int c) {
+        return new VAXOp(mne, VAXType.OWORD, c);
+    }
+
+    private static VAXOp f(String mne, int c) {
+        return new VAXOp(mne, VAXType.FFLOAT, c);
+    }
+
+    private static VAXOp fw(String mne, int c) {
+        return new VAXOp(mne, VAXType.FFLOAT, c, VAXType.WORD);
+    }
+
+    private static VAXOp d(String mne, int c) {
+        return new VAXOp(mne, VAXType.DFLOAT, c);
+    }
+
+    private static VAXOp dw(String mne, int c) {
+        return new VAXOp(mne, VAXType.DFLOAT, c, VAXType.WORD);
+    }
+
+    private static VAXOp g(String mne, int c) {
+        return new VAXOp(mne, VAXType.GFLOAT, c);
+    }
+
+    private static VAXOp gw(String mne, int c) {
+        return new VAXOp(mne, VAXType.GFLOAT, c, VAXType.WORD);
+    }
+
+    private static VAXOp h(String mne, int c) {
+        return new VAXOp(mne, VAXType.HFLOAT, c);
+    }
+
+    private static VAXOp hw(String mne, int c) {
+        return new VAXOp(mne, VAXType.HFLOAT, c, VAXType.WORD);
+    }
+
+    private static VAXOp brb(String mne) {
+        return new VAXOp(mne, VAXType.NONE, 0, VAXType.BYTE);
+    }
+
+    private static VAXOp brw(String mne) {
+        return new VAXOp(mne, VAXType.NONE, 0, VAXType.WORD);
+    }
+
+    private static VAXOp cvt(String t) {
+        VAXType t1 = VAX.fromSuffix(t.charAt(t.length() - 2));
+        VAXType t2 = VAX.fromSuffix(t.charAt(t.length() - 1));
+        return new VAXOp("cvt" + t, t1, 1, t2, true);
+    }
+
+    private static VAXOp word(int w) {
+        return new VAXOp(String.format(".word 0x%x", w));
+    }
+
+    private static final VAXOp[][] ops = {
+        new VAXOp[]{
+            /* 00 */op("halt"), op("nop"), op("rei"), op("bpt"), op("ret"), op("rsb"), op("ldpctx"), op("svpctx"),
+            /* 08 */ w("cvtps", 4), w("cvtsp", 4), l("index", 6), b("crc", 4), b("prober", 3), b("probew", 3), b("insque", 2), b("remque", 2),
+            /* 10 */ brb("bsbb"), brb("brb"), brb("bneq"), brb("beql"), brb("bgtr"), brb("bleq"), b("jsb", 1), b("jmp", 1),
+            /* 18 */ brb("bgeq"), brb("blss"), brb("bgtru"), brb("blequ"), brb("bvc"), brb("bvs"), brb("bcc"), brb("blssu"),
+            /* 20 */ w("addp4", 4), w("addp6", 6), w("subp4", 4), w("subp6", 6), w("cvtpt", 5), w("mulp", 6), w("cvttp", 5), w("divp", 6),
+            /* 28 */ w("movc3", 3), w("cmpc3", 3), w("scanc", 4), w("spanc", 4), w("movc5", 5), w("cmpc5", 5), w("movtc", 6), w("movtuc", 6),
+            /* 30 */ brw("bsbw"), brw("brw"), cvt("wl"), cvt("wb"), w("movp", 3), w("cmpp3", 3), w("cvtpl", 3), w("cmpp4", 4),
+            /* 38 */ w("editpc", 4), w("matchc", 4), b("locc", 3), b("skpc", 3), w("movzwl", 2), ww("acbw", 3), w("movaw", 2), w("pushaw", 1),
+            /* 40 */ f("addf2", 2), f("addf3", 3), f("subf2", 2), f("subf3", 3), f("mulf2", 2), f("mulf3", 3), f("divf2", 2), f("divf3", 3),
+            /* 48 */ cvt("fb"), cvt("fw"), cvt("fl"), cvt("rfl"), cvt("bf"), cvt("wf"), cvt("lf"), fw("acbf", 3),
+            /* 50 */ f("movf", 2), f("cmpf", 2), f("mnegf", 2), f("tstf", 1), f("emodf", 5), f("polyf", 3), cvt("fd"), null,
+            /* 58 */ w("adawi", 2), null, null, null, b("insqhi", 2), b("insqti", 2), q("remqhi", 2), q("remqti", 2),
+            /* 60 */ d("addd2", 2), d("addd3", 3), d("subd2", 2), d("subd3", 3), d("muld2", 2), d("muld3", 3), d("divd2", 2), d("divd3", 3),
+            /* 68 */ cvt("db"), cvt("dw"), cvt("dl"), cvt("rdl"), cvt("bd"), cvt("wd"), cvt("ld"), dw("acbd", 3),
+            /* 70 */ d("movd", 2), d("cmpd", 2), d("mnegd", 2), d("tstd", 1), d("emodd", 5), d("polyd", 3), cvt("df"), null,
+            /* 78 */ b("ashl", 3), b("ashq", 3), l("emul", 4), l("ediv", 4), d("clrd", 1), q("movq", 2), q("movaq", 2), q("pushaq", 1),
+            /* 80 */ b("addb2", 2), b("addb3", 3), b("subb2", 2), b("subb3", 3), b("mulb2", 2), b("mulb3", 3), b("divb2", 2), b("divb3", 3),
+            /* 88 */ b("bisb2", 2), b("bisb3", 3), b("bicb2", 2), b("bicb3", 3), b("xorb2", 2), b("xorb3", 3), b("mnegb", 2), b("caseb", 3),
+            /* 90 */ b("movb", 2), b("cmpb", 2), b("mcomb", 2), b("bitb", 2), b("clrb", 1), b("tstb", 1), b("incb", 1), b("decb", 1),
+            /* 98 */ cvt("bl"), cvt("bw"), b("movzbl", 2), b("movzbw", 2), b("rotl", 3), bw("acbb", 3), b("movab", 2), b("pushab", 1),
+            /* a0 */ w("addw2", 2), w("addw3", 3), w("subw2", 2), w("subw3", 3), w("mulw2", 2), w("mulw3", 3), w("divw2", 2), w("divw3", 3),
+            /* a8 */ w("bisw2", 2), w("bisw3", 3), w("bicw2", 2), w("bicw3", 3), w("xorw2", 2), w("xorw3", 3), w("mnegw", 2), w("casew", 3),
+            /* b0 */ w("movw", 2), w("cmpw", 2), w("mcomw", 2), w("bitw", 2), w("clrw", 1), w("tstw", 1), w("incw", 1), w("decw", 1),
+            /* b8 */ w("bispsw", 1), w("bicpsw", 1), w("popr", 1), w("pushr", 1), w("chmk", 1), w("chme", 1), w("chms", 1), w("chmu", 1),
+            /* c0 */ l("addl2", 2), l("addl3", 3), l("subl2", 2), l("subl3", 3), l("mull2", 2), l("mull3", 3), l("divl2", 2), l("divl3", 3),
+            /* c8 */ l("bisl2", 2), l("bisl3", 3), l("bicl2", 2), l("bicl3", 3), l("xorl2", 2), l("xorl3", 3), l("mnegl", 2), l("casel", 3),
+            /* d0 */ l("movl", 2), l("cmpl", 2), l("mcoml", 2), l("bitl", 2), f("clrf", 1), l("tstl", 1), l("incl", 1), l("decl", 1),
+            /* d8 */ l("adwc", 2), l("sbwc", 2), l("mtpr", 2), l("mfpr", 2), l("movpsl", 1), l("pushl", 1), l("moval", 2), l("pushal", 1),
+            /* e0 */ lb("bbs", 2), lb("bbc", 2), lb("bbss", 2), lb("bbcs", 2), lb("bbsc", 2), lb("bbcc", 2), lb("bbssi", 2), lb("bbcci", 2),
+            /* e8 */ lb("blbs", 1), lb("blbc", 1), l("ffs", 4), l("ffc", 4), l("cmpv", 4), l("cmpzv", 4), l("extv", 4), l("extzv", 4),
+            /* f0 */ l("insv", 4), lw("acbl", 3), lb("aoblss", 2), lb("aobleq", 2), lb("sobgeq", 1), lb("sobgtr", 1), cvt("lb"), cvt("lw"),
+            /* f8 */ b("ashp", 6), l("cvtlp", 3), b("callg", 2), l("calls", 2), op("xfc"), null, null, null
+        }, new VAXOp[0x100], new VAXOp[0x100], new VAXOp[0x100]
     };
-    private static final VAXOp[] noops = new VAXOp[0x10000];
 
-    private static VAXOp noop(int b1, int b2) {
-        int b = b1 << 8 | b2;
-        if (noops[b] == null) {
-            noops[b] = new VAXOp(String.format(".word 0x%x", b));
+    static {
+        System.arraycopy(new VAXOp[]{
+            /* fd40 */g("addg2", 2), g("addg3", 3), g("subg2", 2), g("subg3", 3), g("mulg2", 2), g("mulg3", 3), g("divg2", 2), g("divg3", 3),
+            /* fd48 */ cvt("gb"), cvt("gw"), cvt("gl"), cvt("rgl"), cvt("bg"), cvt("wg"), cvt("lg"), gw("acbg", 3),
+            /* fd50 */ g("movg", 2), g("cmpg", 2), g("mnegg", 2), g("tstg", 1), g("emodg", 5), g("polyg", 3), cvt("gh"), null,
+            /* fd58 */ null, null, null, null, null, null, null, null,
+            /* fd60 */ h("addh2", 2), h("addh3", 3), h("subh2", 2), h("subh3", 3), h("mulh2", 2), h("mulh3", 3), h("divh2", 2), h("divh3", 3),
+            /* fd68 */ cvt("hb"), cvt("hw"), cvt("hl"), cvt("rhl"), cvt("bh"), cvt("wh"), cvt("lh"), hw("acbh", 3),
+            /* fd70 */ h("movh", 2), h("cmph", 2), h("mnegh", 2), h("tsth", 1), h("emodh", 5), h("polyh", 3), cvt("hg"), null,
+            /* fd78 */ null, null, null, null, h("clrh", 1), o("movo", 2), h("movah", 2), h("pushah", 1)
+        }, 0, ops[1], 0x40, 0x40);
+
+        System.arraycopy(new VAXOp[]{/* fd32 */cvt("dh"), cvt("gf")}, 0, ops[1], 0x32, 2);
+        System.arraycopy(new VAXOp[]{/* fd98 */cvt("fh"), cvt("fg")}, 0, ops[1], 0x98, 2);
+        System.arraycopy(new VAXOp[]{/* fdf6 */cvt("hf"), cvt("hd")}, 0, ops[1], 0xf6, 2);
+        System.arraycopy(new VAXOp[]{/* fffd */l("bugl", 1), w("bugw", 1)}, 0, ops[3], 0xfd, 2);
+
+        for (int i = 1; i < 4; i++) {
+            for (int j = 0; j < 0x100; ++j) {
+                if (ops[i][j] == null) {
+                    ops[i][j] = word((0xfc + i) << 8 | j);
+                }
+            }
         }
-        return noops[b];
     }
 
-    private static VAXOp opi23(int b, String mne) {
-        int c = (b & 1) + 2;
-        VAXType t = VAX.fromOp(b);
-        return new VAXOp(mne + VAX.getSuffix(t) + c, t, c);
-    }
+    private static final VAXOp[] words = new VAXOp[0x10000];
 
     public static VAXOp fetch(Disasm dis) {
         int b = dis.fetch();
-        switch (b) {
-            case 0x00:
-                return new VAXOp("halt");
-            case 0x01:
-                return new VAXOp("nop");
-            case 0x04:
-                return new VAXOp("ret");
-            case 0x05:
-                return new VAXOp("rsb");
-            case 0x80:
-            case 0x81:
-            case 0xa0:
-            case 0xa1:
-            case 0xc0:
-            case 0xc1:
-                return opi23(b, "add");
-            case 0x82:
-            case 0x83:
-            case 0xa2:
-            case 0xa3:
-            case 0xc2:
-            case 0xc3:
-                return opi23(b, "sub");
-            case 0x84:
-            case 0x85:
-            case 0xa4:
-            case 0xa5:
-            case 0xc4:
-            case 0xc5:
-                return opi23(b, "mul");
-            case 0x86:
-            case 0x87:
-            case 0xa6:
-            case 0xa7:
-            case 0xc6:
-            case 0xc7:
-                return opi23(b, "div");
-            case 0x88:
-            case 0x89:
-            case 0xa8:
-            case 0xa9:
-            case 0xc8:
-            case 0xc9:
-                return opi23(b, "bis");
-            case 0x8a:
-            case 0x8b:
-            case 0xaa:
-            case 0xab:
-            case 0xca:
-            case 0xcb:
-                return opi23(b, "bic");
-            case 0x8c:
-            case 0x8d:
-            case 0xac:
-            case 0xad:
-            case 0xcc:
-            case 0xcd:
-                return opi23(b, "xor");
-            case 0x90:
-            case 0xb0:
-            case 0xd0: {
-                VAXType t = VAX.fromOp(b);
-                return new VAXOp("mov" + VAX.getSuffix(t), t, 2);
-            }
-            case 0x12:
-            case 0x13:
-            case 0x14:
-            case 0x15:
-            case 0x18:
-            case 0x19:
-            case 0x1a:
-            case 0x1b:
-            case 0x1c:
-            case 0x1d:
-            case 0x1e:
-            case 0x1f: {
-                return new VAXOp(BR[b - 0x12], VAXType.NONE, 0, VAXType.BYTE);
-            }
-            case 0x16:
-                return new VAXOp("jsb", VAXType.WORD, 1);
-            case 0x17:
-                return new VAXOp("jmp", VAXType.WORD, 1);
-            case 0xfb:
-                return new VAXOp("calls", VAXType.WORD, 2);
-            case 0x98:
-                return new VAXOp("cvtbl", VAXType.BYTE, 2);
-            case 0x99:
-                return new VAXOp("cvtbw", VAXType.BYTE, 2);
-            case 0xdd:
-                return new VAXOp("pushl", VAXType.LONG, 1);
-            case 0xdf:
-                return new VAXOp("pushal", VAXType.LONG, 1);
-            default:
-                return noop(b, dis.fetch());
+        if (b >= 0xfd) {
+            return ops[b - 0xfc][dis.fetch()];
         }
+        VAXOp op = ops[0][b];
+        if (op != null) {
+            return op;
+        }
+        int bb = b << 8 | dis.fetch();
+        if (words[bb] == null) {
+            words[bb] = word(bb);
+        }
+        return words[bb];
     }
 }
 
@@ -312,7 +400,7 @@ class Disasm extends Memory {
             case 1:
             case 2:
             case 3:
-                return String.format("$0x%x", b);
+                return String.format("$0x%x%s", b, VAX.getValueSuffix(t));
             case 4:
                 return getOpr(VAXType.LONG) + "[" + r + "]";
             case 5:
@@ -322,14 +410,17 @@ class Disasm extends Memory {
             case 7:
                 return "-(" + r + ")";
             case 8:
-            case 9: {
-                String prefix = (b1 & 1) == 1 ? "@" : "";
                 if (b2 == 15) {
-                    return prefix + fetchHex(t);
+                    return "$" + fetchHex(t);
                 } else {
-                    return prefix + "(" + r + ")+";
+                    return "(" + r + ")+";
                 }
-            }
+            case 9:
+                if (b2 == 15) {
+                    return fetchHex(VAXType.LONG);
+                } else {
+                    return "@(" + r + ")+";
+                }
             case 0xa:
             case 0xb:
             case 0xc:
