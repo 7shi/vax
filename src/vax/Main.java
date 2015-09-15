@@ -1,23 +1,33 @@
 // This file is licensed under the CC0.
 package vax;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Paths;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class Main {
+class Disasm {
 
-    static byte[] text;
-    static ByteBuffer buf;
-    static int pc;
+    static String[] regs = {
+        "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
+        "r8", "r9", "r10", "r11", "ap", "fp", "sp", "pc"
+    };
+    static String[] isfx = {"b", "w", "l"};
+    static String[] br = {
+        "bneq", "beql", "bgtr", "bleq", "", "",
+        "bgeq", "blss", "bgtru", "blequ", "bvc", "bvs", "bcc", "bcs"};
 
-    static int fetch() {
+    byte[] text;
+    ByteBuffer buf;
+    int pc;
+
+    int fetch() {
         return Byte.toUnsignedInt(text[pc++]);
     }
 
-    static int fetch(int n) {
+    int fetch(int n) {
         int ret = 0;
         switch (n) {
             case 0:
@@ -35,7 +45,7 @@ public class Main {
         return ret;
     }
 
-    static int fetchSigned(int n) {
+    int fetchSigned(int n) {
         int ret = 0;
         switch (n) {
             case 0:
@@ -53,13 +63,7 @@ public class Main {
         return ret;
     }
 
-    static String[] regs = {
-        "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
-        "r8", "r9", "r10", "r11", "ap", "fp", "sp", "pc"
-    };
-    static String[] isfx = {"b", "w", "l"};
-
-    static String getOpr(int n) {
+    String getOpr(int n) {
         int b = fetch(), b1 = b >> 4, b2 = b & 15;
         String r = regs[b2];
         switch (b1) {
@@ -107,7 +111,7 @@ public class Main {
         }
     }
 
-    static String op(int count, int n, String mne, boolean sfx1, boolean sfx2) {
+    String op(int count, int n, String mne, boolean sfx1, boolean sfx2) {
         StringBuilder sb = new StringBuilder();
         sb.append(mne);
         if (sfx1) {
@@ -126,16 +130,12 @@ public class Main {
         return sb.toString();
     }
 
-    static String opi23(int b, String mne) {
+    String opi23(int b, String mne) {
         int c = (b & 1) + 2;
         return op(c, (b - 0x80) >> 5, mne, true, true);
     }
 
-    static String[] br = {
-        "bneq", "beql", "bgtr", "bleq", "", "",
-        "bgeq", "blss", "bgtru", "blequ", "bvc", "bvs", "bcc", "bcs"};
-
-    static String disasm1() {
+    String disasm1() {
         int b = fetch();
         switch (b) {
             case 0x00:
@@ -233,42 +233,48 @@ public class Main {
         }
     }
 
-    static void disasm(String path) {
-        try {
-            text = java.nio.file.Files.readAllBytes(Paths.get(path));
-            buf = ByteBuffer.wrap(text).order(ByteOrder.LITTLE_ENDIAN);
-            while (pc < text.length) {
-                int pc2 = pc;
-                String asm = disasm1();
-                for (int i = 0;; ++i) {
-                    if (pc2 + i == pc) {
-                        if (i <= 4) {
-                            for (; i < 4; ++i) {
-                                System.out.print("   ");
-                            }
-                            System.out.printf("\t%s", asm);
+    void disasm() {
+        while (pc < text.length) {
+            int pc2 = pc;
+            String asm = disasm1();
+            for (int i = 0;; ++i) {
+                if (pc2 + i == pc) {
+                    if (i <= 4) {
+                        for (; i < 4; ++i) {
+                            System.out.print("   ");
                         }
-                        System.out.println();
-                        break;
-                    } else if ((i & 3) == 0) {
-                        if (i == 4) {
-                            System.out.printf("\t%s", asm);
-                        }
-                        if (i > 0) {
-                            System.out.println();
-                        }
-                        System.out.printf("%8x:\t", pc2 + i);
+                        System.out.printf("\t%s", asm);
                     }
-                    System.out.printf("%02x ", text[pc2 + i]);
+                    System.out.println();
+                    break;
+                } else if ((i & 3) == 0) {
+                    if (i == 4) {
+                        System.out.printf("\t%s", asm);
+                    }
+                    if (i > 0) {
+                        System.out.println();
+                    }
+                    System.out.printf("%8x:\t", pc2 + i);
                 }
+                System.out.printf("%02x ", text[pc2 + i]);
             }
-        } catch (Exception ex) {
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
+    public Disasm(String path) throws IOException {
+        text = java.nio.file.Files.readAllBytes(Paths.get(path));
+        buf = ByteBuffer.wrap(text).order(ByteOrder.LITTLE_ENDIAN);
+    }
+}
+
+public class Main {
+
     public static void main(String[] args) {
-        //disasm("samples/unix.text");
-        disasm("samples/echo.text");
+        try {
+            //new Disasm("samples/unix.text").disasm();
+            new Disasm("samples/echo.text").disasm();
+        } catch (IOException ex) {
+            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 }
