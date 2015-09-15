@@ -132,6 +132,42 @@ class Memory {
     }
 }
 
+class VAXOp {
+
+    private final String mne;
+    private final VAXType type, rel;
+    private final int count;
+
+    public VAXOp(String mne) {
+        this(mne, VAXType.NONE, 0);
+    }
+
+    public VAXOp(String mne, VAXType type, int count) {
+        this(mne, type, count, VAXType.NONE);
+    }
+
+    public VAXOp(String mne, VAXType type, int count, VAXType rel) {
+        this.mne = mne;
+        this.type = type;
+        this.count = count;
+        this.rel = rel;
+    }
+
+    public String read(Disasm dis) {
+        StringBuilder sb = new StringBuilder(mne);
+        for (int i = 0; i < count; ++i) {
+            sb.append(i == 0 ? " " : ",");
+            sb.append(dis.getOpr(type));
+        }
+        if (rel != VAXType.NONE) {
+            sb.append(count == 0 ? " " : ",");
+            int r = dis.fetchSigned(rel);
+            sb.append(String.format("0x%x", dis.pc + r));
+        }
+        return sb.toString();
+    }
+}
+
 class Disasm extends Memory {
 
     private static final String[] REGS = {
@@ -197,41 +233,23 @@ class Disasm extends Memory {
         }
     }
 
-    String op(int count, VAXType t, String mne, boolean sfx1, boolean sfx2) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(mne);
-        if (sfx1) {
-            sb.append(VAX.getSuffix(t));
-        }
-        if (sfx2) {
-            sb.append(count);
-        }
-        sb.append(" ");
-        for (int i = 0; i < count; ++i) {
-            if (i > 0) {
-                sb.append(",");
-            }
-            sb.append(getOpr(t));
-        }
-        return sb.toString();
-    }
-
     String opi23(int b, String mne) {
         int c = (b & 1) + 2;
-        return op(c, VAX.fromOp(b), mne, true, true);
+        VAXType t = VAX.fromOp(b);
+        return new VAXOp(mne + VAX.getSuffix(t) + c, t, c).read(this);
     }
 
     String disasm1() {
         int b = fetch();
         switch (b) {
             case 0x00:
-                return "halt";
+                return new VAXOp("halt").read(this);
             case 0x01:
-                return "nop";
+                return new VAXOp("nop").read(this);
             case 0x04:
-                return "ret";
+                return new VAXOp("ret").read(this);
             case 0x05:
-                return "rsb";
+                return new VAXOp("rsb").read(this);
             case 0x80:
             case 0x81:
             case 0xa0:
@@ -283,8 +301,10 @@ class Disasm extends Memory {
                 return opi23(b, "xor");
             case 0x90:
             case 0xb0:
-            case 0xd0:
-                return op(2, VAX.fromOp(b), "mov", true, false);
+            case 0xd0: {
+                VAXType t = VAX.fromOp(b);
+                return new VAXOp("mov" + VAX.getSuffix(t), t, 2).read(this);
+            }
             case 0x12:
             case 0x13:
             case 0x14:
@@ -297,23 +317,22 @@ class Disasm extends Memory {
             case 0x1d:
             case 0x1e:
             case 0x1f: {
-                int rel = fetchSigned(VAXType.BYTE);
-                return String.format("%s 0x%x", BR[b - 0x12], pc + rel);
+                return new VAXOp(BR[b - 0x12], VAXType.NONE, 0, VAXType.BYTE).read(this);
             }
             case 0x16:
-                return op(1, VAXType.WORD, "jsb", false, false);
+                return new VAXOp("jsb", VAXType.WORD, 1).read(this);
             case 0x17:
-                return op(1, VAXType.WORD, "jmp", false, false);
+                return new VAXOp("jmp", VAXType.WORD, 1).read(this);
             case 0xfb:
-                return op(2, VAXType.WORD, "calls", false, false);
+                return new VAXOp("calls", VAXType.WORD, 2).read(this);
             case 0x98:
-                return op(2, VAXType.BYTE, "cvtbl", false, false);
+                return new VAXOp("cvtbl", VAXType.BYTE, 2).read(this);
             case 0x99:
-                return op(2, VAXType.BYTE, "cvtbw", false, false);
+                return new VAXOp("cvtbw", VAXType.BYTE, 2).read(this);
             case 0xdd:
-                return op(1, VAXType.WORD, "push", true, false);
+                return new VAXOp("pushl", VAXType.LONG, 1).read(this);
             case 0xdf:
-                return op(1, VAXType.WORD, "pusha", true, false);
+                return new VAXOp("pushal", VAXType.LONG, 1).read(this);
             default:
                 return "???";
         }
