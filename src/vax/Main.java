@@ -9,11 +9,13 @@ import java.nio.file.Paths;
 
 class Memory {
 
+    protected final String path;
     protected final byte[] text;
     protected final ByteBuffer buf;
     public int pc;
 
     public Memory(String path) throws IOException {
+        this.path = path;
         text = java.nio.file.Files.readAllBytes(Paths.get(path));
         buf = ByteBuffer.wrap(text).order(ByteOrder.LITTLE_ENDIAN);
     }
@@ -447,6 +449,7 @@ class Disasm extends Memory {
     }
 
     void disasm(PrintStream out) {
+        out.println(path);
         while (pc < text.length) {
             int oldpc = pc;
             String asm = disasm1();
@@ -459,8 +462,17 @@ public class Main {
 
     public static void main(String[] args) {
         try {
-            //new Disasm("samples/unix.text").disasm();
-            new Disasm("samples/echo.text").disasm(System.out);
+            if (args.length == 0) {
+                //new Disasm("samples/unix.text").disasm();
+                new Disasm("samples/echo.text").disasm(System.out);
+            } else {
+                for (int i = 0; i < args.length; ++i) {
+                    if (i > 0) {
+                        System.out.println();
+                    }
+                    new Disasm(args[i]).disasm(System.out);
+                }
+            }
         } catch (Exception ex) {
             ex.printStackTrace(System.out);
         }
