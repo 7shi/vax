@@ -433,8 +433,6 @@ class Disasm extends Memory {
                 int disp = fetchSigned(atype[(b1 - 0xa) >> 1]);
                 if (b2 == 15) {
                     return String.format("%s0x%x", prefix, pc + disp);
-                } else if (disp == 0) {
-                    return String.format("%s(%s)", prefix, r);
                 } else {
                     return String.format("%s0x%x(%s)", prefix, disp, r); // 符号?
                 }
