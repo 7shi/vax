@@ -63,7 +63,7 @@ class Memory {
     }
 
     public String fetchHex(VAXType t) {
-        int len = VAX.getLength(t);
+        int len = t.getLength();
         int[] bs = new int[len];
         for (int i = 0; i < len; ++i) {
             bs[i] = fetch();
@@ -72,7 +72,7 @@ class Memory {
         for (int i = len - 1; i >= 0; --i) {
             sb.append(String.format("%02x", bs[i]));
         }
-        sb.append(VAX.getValueSuffix(t));
+        sb.append(t.getValueSuffix());
         return sb.toString();
     }
 
@@ -105,36 +105,35 @@ class Memory {
 enum VAXType {
 
     BYTE, WORD, LONG, QWORD, OWORD,
-    FFLOAT, DFLOAT, GFLOAT, HFLOAT, RELB, RELW
-}
+    FFLOAT, DFLOAT, GFLOAT, HFLOAT,
+    RELB, RELW;
 
-class VAX {
-
-    private static final int[] typeLen = {1, 2, 4, 8, 16, 4, 8, 8, 16};
+    private static final int[] typeLen = {
+        1, 2, 4, 8, 16, 4, 8, 8, 16
+    };
     private static final String[] typeSfx = {
         "", "", "", "", "",
         " [f-float]", " [d-float]", " [g-float]", " [h-float]"
     };
     private static final VAXType[] opType = {
-        VAXType.FFLOAT, VAXType.DFLOAT,
-        VAXType.BYTE, VAXType.WORD, VAXType.LONG
+        FFLOAT, DFLOAT, BYTE, WORD, LONG
     };
     private static final String sfx = "bwlqofdgh12";
 
-    public static int getLength(VAXType t) {
-        return typeLen[t.ordinal()];
+    public int getLength() {
+        return typeLen[ordinal()];
     }
 
-    public static String getValueSuffix(VAXType t) {
-        return typeSfx[t.ordinal()];
+    public String getValueSuffix() {
+        return typeSfx[ordinal()];
     }
 
     public static VAXType fromOp(int op) {
         return opType[(op - 0x40) >> 5];
     }
 
-    public static char getSuffix(VAXType t) {
-        return sfx.charAt(t.ordinal());
+    public char getSuffix() {
+        return sfx.charAt(ordinal());
     }
 
     public static VAXType fromSuffix(char ch) {
@@ -269,8 +268,8 @@ class VAXOps {
     }
 
     private static VAXOp cvt(String t) {
-        VAXType t1 = VAX.fromSuffix(t.charAt(t.length() - 2));
-        VAXType t2 = VAX.fromSuffix(t.charAt(t.length() - 1));
+        VAXType t1 = VAXType.fromSuffix(t.charAt(t.length() - 2));
+        VAXType t2 = VAXType.fromSuffix(t.charAt(t.length() - 1));
         return new VAXOp("cvt" + t, t1, 1, t2);
     }
 
@@ -382,7 +381,7 @@ class Disasm extends Memory {
             case 1:
             case 2:
             case 3:
-                return String.format("$0x%x%s", b, VAX.getValueSuffix(t));
+                return String.format("$0x%x%s", b, t.getValueSuffix());
             case 4:
                 return getOpr(t) + "[" + r + "]";
             case 5:
