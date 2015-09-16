@@ -119,6 +119,7 @@ class VAX {
         VAXType.FFLOAT, VAXType.DFLOAT,
         VAXType.BYTE, VAXType.WORD, VAXType.LONG
     };
+    private static final String sfx = "bwlqofdgh12";
 
     public static VAXType fromOp(int op) {
         return opType[(op - 0x40) >> 5];
@@ -133,32 +134,11 @@ class VAX {
     }
 
     public static String getSuffix(VAXType t) {
-        return t.toString().substring(0, 1).toLowerCase();
+        return String.valueOf(sfx.charAt(t.ordinal()));
     }
 
     public static VAXType fromSuffix(char ch) {
-        switch (ch) {
-            case 'b':
-                return VAXType.BYTE;
-            case 'w':
-                return VAXType.WORD;
-            case 'l':
-                return VAXType.LONG;
-            case 'q':
-                return VAXType.QWORD;
-            case 'o':
-                return VAXType.OWORD;
-            case 'f':
-                return VAXType.FFLOAT;
-            case 'd':
-                return VAXType.DFLOAT;
-            case 'g':
-                return VAXType.GFLOAT;
-            case 'h':
-                return VAXType.HFLOAT;
-            default:
-                return null;
-        }
+        return VAXType.values()[sfx.indexOf(ch)];
     }
 }
 
