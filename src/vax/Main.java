@@ -121,16 +121,16 @@ class VAX {
     };
     private static final String sfx = "bwlqofdgh12";
 
-    public static VAXType fromOp(int op) {
-        return opType[(op - 0x40) >> 5];
-    }
-
     public static int getLength(VAXType t) {
         return typeLen[t.ordinal()];
     }
 
     public static String getValueSuffix(VAXType t) {
         return typeSfx[t.ordinal()];
+    }
+
+    public static VAXType fromOp(int op) {
+        return opType[(op - 0x40) >> 5];
     }
 
     public static String getSuffix(VAXType t) {
