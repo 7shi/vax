@@ -165,44 +165,41 @@ class VAX {
 class VAXOp {
 
     private final String mne;
-    private final VAXType type, rel;
-    private final int count;
+    private final VAXType[] types;
 
     public VAXOp(String mne) {
         this(mne, VAXType.NONE, 0);
     }
 
     public VAXOp(String mne, VAXType type, int count) {
-        this(mne, type, count, VAXType.NONE);
+        this.mne = mne;
+        types = new VAXType[count];
+        for (int i = 0; i < count; ++i) {
+            types[i] = type;
+        }
     }
 
     public VAXOp(String mne, VAXType type, int count, VAXType rel) {
-        this.mne = mne;
-        this.type = type;
-        this.count = count;
-        this.rel = rel;
+        this(mne, type, count + 1);
+        types[count] = rel;
     }
 
     public String read(Disasm dis) {
         StringBuilder sb = new StringBuilder(mne);
-        for (int i = 0; i < count; ++i) {
+        for (int i = 0; i < types.length; ++i) {
             sb.append(i == 0 ? " " : ",");
-            sb.append(dis.getOpr(type));
-        }
-        switch (rel) {
-            case NONE:
-                break;
-            case RELB:
-            case RELW: {
-                sb.append(count == 0 ? " " : ",");
-                int r = dis.fetchSigned(rel);
-                sb.append(String.format("0x%x", dis.pc + r));
-                break;
+            VAXType t = types[i];
+            switch (t) {
+                case RELB:
+                case RELW: {
+                    int r = dis.fetchSigned(t);
+                    sb.append(String.format("0x%x", dis.pc + r));
+                    break;
+                }
+                default:
+                    sb.append(dis.getOpr(t));
+                    break;
             }
-            default:
-                sb.append(count == 0 ? " " : ",");
-                sb.append(dis.getOpr(rel));
-                break;
         }
         return sb.toString();
     }
@@ -283,11 +280,11 @@ class VAXOps {
     }
 
     private static VAXOp brb(String mne) {
-        return new VAXOp(mne, VAXType.NONE, 0, VAXType.RELB);
+        return new VAXOp(mne, VAXType.RELB, 1);
     }
 
     private static VAXOp brw(String mne) {
-        return new VAXOp(mne, VAXType.NONE, 0, VAXType.RELW);
+        return new VAXOp(mne, VAXType.RELW, 1);
     }
 
     private static VAXOp cvt(String t) {
