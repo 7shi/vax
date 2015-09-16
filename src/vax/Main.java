@@ -46,9 +46,11 @@ class Memory {
         int ret = 0;
         switch (t) {
             case BYTE:
+            case RELB:
                 ret = text[pc++];
                 break;
             case WORD:
+            case RELW:
                 ret = buf.getShort(pc);
                 pc += 2;
                 break;
@@ -103,7 +105,7 @@ class Memory {
 enum VAXType {
 
     NONE, BYTE, WORD, LONG, QWORD, OWORD,
-    FFLOAT, DFLOAT, GFLOAT, HFLOAT
+    FFLOAT, DFLOAT, GFLOAT, HFLOAT, RELB, RELW
 }
 
 class VAX {
@@ -165,7 +167,6 @@ class VAXOp {
     private final String mne;
     private final VAXType type, rel;
     private final int count;
-    private final boolean cvt;
 
     public VAXOp(String mne) {
         this(mne, VAXType.NONE, 0);
@@ -176,15 +177,10 @@ class VAXOp {
     }
 
     public VAXOp(String mne, VAXType type, int count, VAXType rel) {
-        this(mne, type, count, rel, false);
-    }
-
-    public VAXOp(String mne, VAXType type, int count, VAXType rel, boolean cvt) {
         this.mne = mne;
         this.type = type;
         this.count = count;
         this.rel = rel;
-        this.cvt = cvt;
     }
 
     public String read(Disasm dis) {
@@ -193,14 +189,20 @@ class VAXOp {
             sb.append(i == 0 ? " " : ",");
             sb.append(dis.getOpr(type));
         }
-        if (rel != VAXType.NONE) {
-            sb.append(count == 0 ? " " : ",");
-            if (cvt) {
-                sb.append(dis.getOpr(rel));
-            } else {
+        switch (rel) {
+            case NONE:
+                break;
+            case RELB:
+            case RELW: {
+                sb.append(count == 0 ? " " : ",");
                 int r = dis.fetchSigned(rel);
                 sb.append(String.format("0x%x", dis.pc + r));
+                break;
             }
+            default:
+                sb.append(count == 0 ? " " : ",");
+                sb.append(dis.getOpr(rel));
+                break;
         }
         return sb.toString();
     }
@@ -217,7 +219,7 @@ class VAXOps {
     }
 
     private static VAXOp bw(String mne, int c) {
-        return new VAXOp(mne, VAXType.BYTE, c, VAXType.WORD);
+        return new VAXOp(mne, VAXType.BYTE, c, VAXType.RELW);
     }
 
     private static VAXOp w(String mne, int c) {
@@ -225,7 +227,7 @@ class VAXOps {
     }
 
     private static VAXOp ww(String mne, int c) {
-        return new VAXOp(mne, VAXType.WORD, c, VAXType.WORD);
+        return new VAXOp(mne, VAXType.WORD, c, VAXType.RELW);
     }
 
     private static VAXOp l(String mne, int c) {
@@ -233,11 +235,11 @@ class VAXOps {
     }
 
     private static VAXOp lb(String mne, int c) {
-        return new VAXOp(mne, VAXType.LONG, c, VAXType.BYTE);
+        return new VAXOp(mne, VAXType.LONG, c, VAXType.RELB);
     }
 
     private static VAXOp lw(String mne, int c) {
-        return new VAXOp(mne, VAXType.LONG, c, VAXType.WORD);
+        return new VAXOp(mne, VAXType.LONG, c, VAXType.RELW);
     }
 
     private static VAXOp q(String mne, int c) {
@@ -253,7 +255,7 @@ class VAXOps {
     }
 
     private static VAXOp fw(String mne, int c) {
-        return new VAXOp(mne, VAXType.FFLOAT, c, VAXType.WORD);
+        return new VAXOp(mne, VAXType.FFLOAT, c, VAXType.RELW);
     }
 
     private static VAXOp d(String mne, int c) {
@@ -261,7 +263,7 @@ class VAXOps {
     }
 
     private static VAXOp dw(String mne, int c) {
-        return new VAXOp(mne, VAXType.DFLOAT, c, VAXType.WORD);
+        return new VAXOp(mne, VAXType.DFLOAT, c, VAXType.RELW);
     }
 
     private static VAXOp g(String mne, int c) {
@@ -269,7 +271,7 @@ class VAXOps {
     }
 
     private static VAXOp gw(String mne, int c) {
-        return new VAXOp(mne, VAXType.GFLOAT, c, VAXType.WORD);
+        return new VAXOp(mne, VAXType.GFLOAT, c, VAXType.RELW);
     }
 
     private static VAXOp h(String mne, int c) {
@@ -277,21 +279,21 @@ class VAXOps {
     }
 
     private static VAXOp hw(String mne, int c) {
-        return new VAXOp(mne, VAXType.HFLOAT, c, VAXType.WORD);
+        return new VAXOp(mne, VAXType.HFLOAT, c, VAXType.RELW);
     }
 
     private static VAXOp brb(String mne) {
-        return new VAXOp(mne, VAXType.NONE, 0, VAXType.BYTE);
+        return new VAXOp(mne, VAXType.NONE, 0, VAXType.RELB);
     }
 
     private static VAXOp brw(String mne) {
-        return new VAXOp(mne, VAXType.NONE, 0, VAXType.WORD);
+        return new VAXOp(mne, VAXType.NONE, 0, VAXType.RELW);
     }
 
     private static VAXOp cvt(String t) {
         VAXType t1 = VAX.fromSuffix(t.charAt(t.length() - 2));
         VAXType t2 = VAX.fromSuffix(t.charAt(t.length() - 1));
-        return new VAXOp("cvt" + t, t1, 1, t2, true);
+        return new VAXOp("cvt" + t, t1, 1, t2);
     }
 
     private static VAXOp word(int w) {
