@@ -419,9 +419,9 @@ class Disasm extends Memory {
                 }
             case 9:
                 if (b2 == 15) {
-                    return fetchHex(VAXType.LONG);
+                    return "*" + fetchHex(VAXType.LONG);
                 } else {
-                    return "@(" + r + ")+";
+                    return "@(" + r + ")+"; // @?
                 }
             case 0xa:
             case 0xb:
