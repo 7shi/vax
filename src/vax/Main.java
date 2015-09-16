@@ -104,15 +104,15 @@ class Memory {
 
 enum VAXType {
 
-    NONE, BYTE, WORD, LONG, QWORD, OWORD,
+    BYTE, WORD, LONG, QWORD, OWORD,
     FFLOAT, DFLOAT, GFLOAT, HFLOAT, RELB, RELW
 }
 
 class VAX {
 
-    private static final int[] typeLen = {0, 1, 2, 4, 8, 16, 4, 8, 8, 16};
+    private static final int[] typeLen = {1, 2, 4, 8, 16, 4, 8, 8, 16};
     private static final String[] typeSfx = {
-        "", "", "", "", "", "",
+        "", "", "", "", "",
         " [f-float]", " [d-float]", " [g-float]", " [h-float]"
     };
     private static final VAXType[] opType = {
@@ -157,7 +157,7 @@ class VAX {
             case 'h':
                 return VAXType.HFLOAT;
             default:
-                return VAXType.NONE;
+                return null;
         }
     }
 }
@@ -168,7 +168,8 @@ class VAXOp {
     private final VAXType[] types;
 
     public VAXOp(String mne) {
-        this(mne, VAXType.NONE, 0);
+        this.mne = mne;
+        types = new VAXType[0];
     }
 
     public VAXOp(String mne, VAXType type, int count) {
