@@ -133,8 +133,8 @@ class VAX {
         return opType[(op - 0x40) >> 5];
     }
 
-    public static String getSuffix(VAXType t) {
-        return String.valueOf(sfx.charAt(t.ordinal()));
+    public static char getSuffix(VAXType t) {
+        return sfx.charAt(t.ordinal());
     }
 
     public static VAXType fromSuffix(char ch) {
