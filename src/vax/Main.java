@@ -404,7 +404,7 @@ class Disasm extends Memory {
             case 3:
                 return String.format("$0x%x%s", b, VAX.getValueSuffix(t));
             case 4:
-                return getOpr(VAXType.LONG) + "[" + r + "]";
+                return getOpr(t) + "[" + r + "]";
             case 5:
                 return r;
             case 6:
