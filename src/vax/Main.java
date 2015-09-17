@@ -24,24 +24,6 @@ class Memory {
         return Byte.toUnsignedInt(text[pc++]);
     }
 
-    public int fetch(int n) {
-        int ret = 0;
-        switch (n) {
-            case 0:
-                ret = Byte.toUnsignedInt(text[pc++]);
-                break;
-            case 1:
-                ret = Short.toUnsignedInt(buf.getShort(pc));
-                pc += 2;
-                break;
-            case 2:
-                ret = buf.getInt(pc);
-                pc += 4;
-                break;
-        }
-        return ret;
-    }
-
     public int fetchSigned(VAXType t) {
         int ret = 0;
         switch (t) {
