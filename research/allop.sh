@@ -1,21 +1,19 @@
 #!/usr/bin/env bash
 
-dest=allop.d
 arch=vax-netbsdelf
 as=$arch-as
 dis="$arch-objdump -d"
-data=`for i in {80..111}; do printf ", 0x%02x" $i; done` # 50-6f
 
-rm -f $dest
-mkdir -p build
-cd build
+rm -f allop.d
+mkdir -p tmp
+cd tmp
 
 func() {
     echo $1
-    echo ".byte $2, 0x8f$data" > $1.s
+    echo ".byte $2, 0x50, 0x50, 0x50, 0x50, 0x50, 0x50" > $1.s
     $as -o $1.o $1.s
     $dis $1.o > $1.d
-    head -n 8 $1.d | tail -n 1 | sed 's/^.*:\s*//' >> ../$dest
+    head -n8 $1.d | tail -n1 | cut -f2- >> ../allop.d
 }
 
 for i in {0..252}
@@ -24,20 +22,12 @@ do
     func $hex "0x$hex"
 done
 
-for i in {0..255}
+for i in {253..255}
 do
-    hex=`printf "%02x" $i`
-    func "fd-$hex" "0xfd, 0x$hex"
-done
-
-for i in {0..255}
-do
-    hex=`printf "%02x" $i`
-    func "fe-$hex" "0xfe, 0x$hex"
-done
-
-for i in {0..255}
-do
-    hex=`printf "%02x" $i`
-    func "ff-$hex" "0xff, 0x$hex"
+    hex1=`printf "%02x" $i`
+    for j in {0..255}
+    do
+        hex2=`printf "%02x" $j`
+        func "$hex1-$hex2" "0x$hex1, 0x$hex2"
+    done
 done

@@ -1,0 +1,306 @@
+00	0		halt
+01	0		nop
+02	0		rei
+03	0		bpt
+04	0		ret
+05	0		rsb
+06	0		ldpctx
+07	0		svpctx
+08	4		cvtps
+09	4		cvtsp
+0a	6		index
+0b	4		crc
+0c	3		prober
+0d	3		probew
+0e	2		insque
+0f	2		remque
+10	0	1	bsbb
+11	0	1	brb
+12	0	1	bneq
+13	0	1	beql
+14	0	1	bgtr
+15	0	1	bleq
+16	1		jsb
+17	1		jmp
+18	0	1	bgeq
+19	0	1	blss
+1a	0	1	bgtru
+1b	0	1	blequ
+1c	0	1	bvc
+1d	0	1	bvs
+1e	0	1	bcc
+1f	0	1	blssu
+20	4		addp4
+21	6		addp6
+22	4		subp4
+23	6		subp6
+24	5		cvtpt
+25	6		mulp
+26	5		cvttp
+27	6		divp
+28	3		movc3
+29	3		cmpc3
+2a	4		scanc
+2b	4		spanc
+2c	5		movc5
+2d	5		cmpc5
+2e	6		movtc
+2f	6		movtuc
+30	0	2	bsbw
+31	0	2	brw
+32	2		cvtwl
+33	2		cvtwb
+34	3		movp
+35	3		cmpp3
+36	3		cvtpl
+37	4		cmpp4
+38	4		editpc
+39	4		matchc
+3a	3		locc
+3b	3		skpc
+3c	2		movzwl
+3d	3	2	acbw
+3e	2		movaw
+3f	1		pushaw
+40	2		addf2
+41	3		addf3
+42	2		subf2
+43	3		subf3
+44	2		mulf2
+45	3		mulf3
+46	2		divf2
+47	3		divf3
+48	2		cvtfb
+49	2		cvtfw
+4a	2		cvtfl
+4b	2		cvtrfl
+4c	2		cvtbf
+4d	2		cvtwf
+4e	2		cvtlf
+4f	3	2	acbf
+50	2		movf
+51	2		cmpf
+52	2		mnegf
+53	1		tstf
+54	5		emodf
+55	3		polyf
+56	2		cvtfd
+58	2		adawi
+5c	2		insqhi
+5d	2		insqti
+5e	2		remqhi
+5f	2		remqti
+60	2		addd2
+61	3		addd3
+62	2		subd2
+63	3		subd3
+64	2		muld2
+65	3		muld3
+66	2		divd2
+67	3		divd3
+68	2		cvtdb
+69	2		cvtdw
+6a	2		cvtdl
+6b	2		cvtrdl
+6c	2		cvtbd
+6d	2		cvtwd
+6e	2		cvtld
+6f	3	2	acbd
+70	2		movd
+71	2		cmpd
+72	2		mnegd
+73	1		tstd
+74	5		emodd
+75	3		polyd
+76	2		cvtdf
+78	3		ashl
+79	3		ashq
+7a	4		emul
+7b	4		ediv
+7c	1		clrd
+7d	2		movq
+7e	2		movaq
+7f	1		pushaq
+80	2		addb2
+81	3		addb3
+82	2		subb2
+83	3		subb3
+84	2		mulb2
+85	3		mulb3
+86	2		divb2
+87	3		divb3
+88	2		bisb2
+89	3		bisb3
+8a	2		bicb2
+8b	3		bicb3
+8c	2		xorb2
+8d	3		xorb3
+8e	2		mnegb
+8f	3		caseb
+90	2		movb
+91	2		cmpb
+92	2		mcomb
+93	2		bitb
+94	1		clrb
+95	1		tstb
+96	1		incb
+97	1		decb
+98	2		cvtbl
+99	2		cvtbw
+9a	2		movzbl
+9b	2		movzbw
+9c	3		rotl
+9d	3	2	acbb
+9e	2		movab
+9f	1		pushab
+a0	2		addw2
+a1	3		addw3
+a2	2		subw2
+a3	3		subw3
+a4	2		mulw2
+a5	3		mulw3
+a6	2		divw2
+a7	3		divw3
+a8	2		bisw2
+a9	3		bisw3
+aa	2		bicw2
+ab	3		bicw3
+ac	2		xorw2
+ad	3		xorw3
+ae	2		mnegw
+af	3		casew
+b0	2		movw
+b1	2		cmpw
+b2	2		mcomw
+b3	2		bitw
+b4	1		clrw
+b5	1		tstw
+b6	1		incw
+b7	1		decw
+b8	1		bispsw
+b9	1		bicpsw
+ba	1		popr
+bb	1		pushr
+bc	1		chmk
+bd	1		chme
+be	1		chms
+bf	1		chmu
+c0	2		addl2
+c1	3		addl3
+c2	2		subl2
+c3	3		subl3
+c4	2		mull2
+c5	3		mull3
+c6	2		divl2
+c7	3		divl3
+c8	2		bisl2
+c9	3		bisl3
+ca	2		bicl2
+cb	3		bicl3
+cc	2		xorl2
+cd	3		xorl3
+ce	2		mnegl
+cf	3		casel
+d0	2		movl
+d1	2		cmpl
+d2	2		mcoml
+d3	2		bitl
+d4	1		clrf
+d5	1		tstl
+d6	1		incl
+d7	1		decl
+d8	2		adwc
+d9	2		sbwc
+da	2		mtpr
+db	2		mfpr
+dc	1		movpsl
+dd	1		pushl
+de	2		moval
+df	1		pushal
+e0	2	1	bbs
+e1	2	1	bbc
+e2	2	1	bbss
+e3	2	1	bbcs
+e4	2	1	bbsc
+e5	2	1	bbcc
+e6	2	1	bbssi
+e7	2	1	bbcci
+e8	1	1	blbs
+e9	1	1	blbc
+ea	4		ffs
+eb	4		ffc
+ec	4		cmpv
+ed	4		cmpzv
+ee	4		extv
+ef	4		extzv
+f0	4		insv
+f1	3	2	acbl
+f2	2	1	aoblss
+f3	2	1	aobleq
+f4	1	1	sobgeq
+f5	1	1	sobgtr
+f6	2		cvtlb
+f7	2		cvtlw
+f8	6		ashp
+f9	3		cvtlp
+fa	2		callg
+fb	2		calls
+fc	0		xfc
+fd-32	2		cvtdh
+fd-33	2		cvtgf
+fd-40	2		addg2
+fd-41	3		addg3
+fd-42	2		subg2
+fd-43	3		subg3
+fd-44	2		mulg2
+fd-45	3		mulg3
+fd-46	2		divg2
+fd-47	3		divg3
+fd-48	2		cvtgb
+fd-49	2		cvtgw
+fd-4a	2		cvtgl
+fd-4b	2		cvtrgl
+fd-4c	2		cvtbg
+fd-4d	2		cvtwg
+fd-4e	2		cvtlg
+fd-4f	3	2	acbg
+fd-50	2		movg
+fd-51	2		cmpg
+fd-52	2		mnegg
+fd-53	1		tstg
+fd-54	5		emodg
+fd-55	3		polyg
+fd-56	2		cvtgh
+fd-60	2		addh2
+fd-61	3		addh3
+fd-62	2		subh2
+fd-63	3		subh3
+fd-64	2		mulh2
+fd-65	3		mulh3
+fd-66	2		divh2
+fd-67	3		divh3
+fd-68	2		cvthb
+fd-69	2		cvthw
+fd-6a	2		cvthl
+fd-6b	2		cvtrhl
+fd-6c	2		cvtbh
+fd-6d	2		cvtwh
+fd-6e	2		cvtlh
+fd-6f	3	2	acbh
+fd-70	2		movh
+fd-71	2		cmph
+fd-72	2		mnegh
+fd-73	1		tsth
+fd-74	5		emodh
+fd-75	3		polyh
+fd-76	2		cvthg
+fd-7c	1		clrh
+fd-7d	2		movo
+fd-7e	2		movah
+fd-7f	1		pushah
+fd-98	2		cvtfh
+fd-99	2		cvtfg
+fd-f6	2		cvthf
+fd-f7	2		cvthd
+ff-fd	1		bugl
+ff-fe	1		bugw
