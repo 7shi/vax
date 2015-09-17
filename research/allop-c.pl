@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 
 while (<>) {
-    chop while substr($_, -1) lt " ";
+    chop while substr($_, -1) le " ";
     @f = split(/\t/);
     @b = split(/ /, $f[0]);
     if ($f[1] =~ /^(.*?) (.*)/) {

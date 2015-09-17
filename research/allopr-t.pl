@@ -23,7 +23,7 @@ sub output {
 }
 
 while (<>) {
-    chop while substr($_, -1) lt " ";
+    chop while substr($_, -1) le " ";
     @f = split(/\t/);
     @b = split(/ /, $f[0]);
     $op = hex($b[0]) < 0xfd ? $b[0] : "$b[0]-$b[1]";
