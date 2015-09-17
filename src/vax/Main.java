@@ -115,9 +115,6 @@ enum VAXType {
         "", "", "", "", "",
         " [f-float]", " [d-float]", " [g-float]", " [h-float]"
     };
-    private static final VAXType[] opType = {
-        FFLOAT, DFLOAT, BYTE, WORD, LONG
-    };
     private static final String sfx = "bwlqofdgh12";
 
     public int getLength() {
@@ -126,10 +123,6 @@ enum VAXType {
 
     public String getValueSuffix() {
         return typeSfx[ordinal()];
-    }
-
-    public static VAXType fromOp(int op) {
-        return opType[(op - 0x40) >> 5];
     }
 
     public char getSuffix() {
