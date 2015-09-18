@@ -73,6 +73,14 @@ enum VAXType {
     GFLOAT('g', 8, " [g-float]"), HFLOAT('h', 16, " [h-float]"),
     RELB('1', 1, ""), RELW('2', 2, "");
 
+    public static final VAXType[] table = new VAXType[128];
+
+    static {
+        for (VAXType t : VAXType.values()) {
+            table[(int) t.suffix] = t;
+        }
+    }
+
     public final char suffix;
     public final int size;
     public final String valueSuffix;
@@ -168,6 +176,14 @@ enum VAXOps {
     CVTHF(0xfdf6, "hf"), CVTHD(0xfdf7, "hd"),
     BUGL(0xfffd, "l"), BUGW(0xfffe, "w");
 
+    public static final VAXOp[] table = new VAXOp[0x10000];
+
+    static {
+        for (VAXOps op : VAXOps.values()) {
+            table[op.op] = new VAXOp(op);
+        }
+    }
+
     public final int op;
     public final String oprs;
 
@@ -179,14 +195,6 @@ enum VAXOps {
 
 class VAXOp {
 
-    private static final VAXType[] types = new VAXType[128];
-
-    static {
-        for (VAXType t : VAXType.values()) {
-            types[(int) t.suffix] = t;
-        }
-    }
-
     private final String mne;
     private final VAXType[] oprs;
 
@@ -195,7 +203,7 @@ class VAXOp {
         int len = op.oprs.length();
         this.oprs = new VAXType[len];
         for (int i = 0; i < len; ++i) {
-            this.oprs[i] = types[op.oprs.charAt(i)];
+            this.oprs[i] = VAXType.table[op.oprs.charAt(i)];
         }
     }
 
@@ -221,14 +229,6 @@ class VAXOp {
 }
 
 class Disasm extends Memory {
-
-    private static final VAXOp[] ops = new VAXOp[0x10000];
-
-    static {
-        for (VAXOps op : VAXOps.values()) {
-            ops[op.op] = new VAXOp(op);
-        }
-    }
 
     private static final String[] regs = {
         "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
@@ -288,11 +288,11 @@ class Disasm extends Memory {
 
     public String disasm1() {
         int op = fetch();
-        if (op >= 0xfd || ops[op] == null) {
+        if (op >= 0xfd || VAXOps.table[op] == null) {
             op = op << 8 | fetch();
         }
-        if (ops[op] != null) {
-            return ops[op].read(this);
+        if (VAXOps.table[op] != null) {
+            return VAXOps.table[op].read(this);
         }
         return String.format(".word 0x%x", op);
     }
