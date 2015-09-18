@@ -4,20 +4,16 @@ package vax;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.file.Paths;
 
 class Memory {
 
-    protected final String path;
     protected final byte[] text;
     protected final ByteBuffer buf;
     public int pc;
 
     public Memory(String path) throws IOException {
-        this.path = path;
-        text = java.nio.file.Files.readAllBytes(Paths.get(path));
-        buf = ByteBuffer.wrap(text).order(ByteOrder.LITTLE_ENDIAN);
+        text = java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(path));
+        buf = ByteBuffer.wrap(text).order(java.nio.ByteOrder.LITTLE_ENDIAN);
     }
 
     public int fetch() {
@@ -34,9 +30,8 @@ class Memory {
                 return buf.getShort(oldpc);
             case 4:
                 return buf.getInt(oldpc);
-            default:
-                return 0;
         }
+        return 0;
     }
 
     public String fetchHex(int size, String suffix) {
@@ -54,27 +49,19 @@ class Memory {
 
     public void output(PrintStream out, int pc, int len, String asm) {
         String fmt = text.length < 0x1000 ? "%4x:\t" : "%8x:\t";
-        for (int i = 0;; ++i) {
-            if (i == len) {
-                if (i <= 4) {
-                    for (; i < 4; ++i) {
-                        out.print("   ");
-                    }
-                    out.printf("\t%s", asm);
-                }
-                out.println();
-                break;
-            } else if ((i & 3) == 0) {
-                if (i == 4) {
-                    out.printf("\t%s", asm);
-                }
+        for (int i = 0; i < len; ++i) {
+            if ((i & 3) == 0) {
                 if (i > 0) {
-                    out.println();
+                    out.println(i == 4 ? "\t" + asm : "");
                 }
                 out.printf(fmt, pc + i);
             }
             out.printf("%02x ", text[pc + i]);
         }
+        for (int i = len; i < 4; ++i) {
+            out.print("   ");
+        }
+        out.println(len <= 4 ? "\t" + asm : "");
     }
 }
 
@@ -309,9 +296,8 @@ class Disasm extends Memory {
                     return String.format("%s0x%x(%s)", prefix, disp, r); // 符号?
                 }
             }
-            default:
-                return "???";
         }
+        return "???";
     }
 
     public VAXOp disasm1() {
@@ -323,7 +309,6 @@ class Disasm extends Memory {
     }
 
     void disasm(PrintStream out) {
-        out.println(path);
         while (pc < text.length) {
             int oldpc = pc;
             String asm = disasm1().read(this);
@@ -335,17 +320,16 @@ class Disasm extends Memory {
 public class Main {
 
     public static void main(String[] args) {
+        if (args.length == 0) {
+            args = new String[]{"samples/echo.text"};
+        }
         try {
-            if (args.length == 0) {
-                //new Disasm("samples/unix.text").disasm(System.out);
-                new Disasm("samples/echo.text").disasm(System.out);
-            } else {
-                for (int i = 0; i < args.length; ++i) {
-                    if (i > 0) {
-                        System.out.println();
-                    }
-                    new Disasm(args[i]).disasm(System.out);
+            for (int i = 0; i < args.length; ++i) {
+                if (i > 0) {
+                    System.out.println();
                 }
+                System.out.println(args[i]);
+                new Disasm(args[i]).disasm(System.out);
             }
         } catch (Exception ex) {
             ex.printStackTrace(System.out);
