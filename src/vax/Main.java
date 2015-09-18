@@ -9,7 +9,7 @@ class Memory {
 
     protected final byte[] text;
     protected final ByteBuffer buf;
-    public int pc;
+    protected int pc;
 
     public Memory(String path) throws IOException {
         text = java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(path));
@@ -186,7 +186,7 @@ enum VAXOp {
 
     public final int op;
     public final String mne;
-    private final VAXType[] oprs;
+    public final VAXType[] oprs;
 
     private VAXOp(int op, String oprs) {
         this.op = op;
@@ -196,26 +196,6 @@ enum VAXOp {
         for (int i = 0; i < len; ++i) {
             this.oprs[i] = VAXType.table[oprs.charAt(i)];
         }
-    }
-
-    public String read(VAXDisasm dis) {
-        StringBuilder sb = new StringBuilder(mne);
-        for (int i = 0; i < oprs.length; ++i) {
-            sb.append(i == 0 ? " " : ",");
-            VAXType t = oprs[i];
-            switch (t) {
-                case RELB:
-                case RELW: {
-                    int r = dis.fetchSigned(t.size);
-                    sb.append(String.format("0x%x", dis.pc + r));
-                    break;
-                }
-                default:
-                    sb.append(dis.getOpr(t));
-                    break;
-            }
-        }
-        return sb.toString();
     }
 }
 
@@ -278,14 +258,31 @@ class VAXDisasm extends Memory {
     }
 
     public String disasm1() {
-        int op = fetch();
-        if (op >= 0xfd || VAXOp.table[op] == null) {
-            op = op << 8 | fetch();
+        int b = fetch();
+        VAXOp op = VAXOp.table[b];
+        if (op == null) {
+            op = VAXOp.table[b << 8 | fetch()];
         }
-        if (VAXOp.table[op] != null) {
-            return VAXOp.table[op].read(this);
+        if (op == null) {
+            return String.format(".word 0x%x", op);
         }
-        return String.format(".word 0x%x", op);
+        StringBuilder sb = new StringBuilder(op.mne);
+        for (int i = 0; i < op.oprs.length; ++i) {
+            sb.append(i == 0 ? " " : ",");
+            VAXType t = op.oprs[i];
+            switch (t) {
+                case RELB:
+                case RELW: {
+                    int r = fetchSigned(t.size);
+                    sb.append(String.format("0x%x", pc + r));
+                    break;
+                }
+                default:
+                    sb.append(getOpr(t));
+                    break;
+            }
+        }
+        return sb.toString();
     }
 
     void disasm(PrintStream out) {
