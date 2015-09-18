@@ -199,11 +199,6 @@ class VAXOp {
         }
     }
 
-    public VAXOp(int op) {
-        this.mne = String.format(".word 0x%x", op);
-        this.oprs = new VAXType[0];
-    }
-
     public String read(Disasm dis) {
         StringBuilder sb = new StringBuilder(mne);
         for (int i = 0; i < oprs.length; ++i) {
@@ -232,15 +227,6 @@ class Disasm extends Memory {
     static {
         for (VAXOps op : VAXOps.values()) {
             ops[op.op] = new VAXOp(op);
-        }
-        for (int i = 0; i < 0x100; ++i) {
-            if (ops[i] == null) {
-                for (int b = i << 8, be = b + 0x100; b < be; ++b) {
-                    if (ops[b] == null) {
-                        ops[b] = new VAXOp(b);
-                    }
-                }
-            }
         }
     }
 
@@ -300,18 +286,21 @@ class Disasm extends Memory {
         return "???";
     }
 
-    public VAXOp disasm1() {
-        int b = fetch();
-        if (b < 0xfd && ops[b] != null) {
-            return ops[b];
+    public String disasm1() {
+        int op = fetch();
+        if (op >= 0xfd || ops[op] == null) {
+            op = op << 8 | fetch();
         }
-        return ops[b << 8 | fetch()];
+        if (ops[op] != null) {
+            return ops[op].read(this);
+        }
+        return String.format(".word 0x%x", op);
     }
 
     void disasm(PrintStream out) {
         while (pc < text.length) {
             int oldpc = pc;
-            String asm = disasm1().read(this);
+            String asm = disasm1();
             output(out, oldpc, pc - oldpc, asm);
         }
     }
