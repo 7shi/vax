@@ -198,7 +198,7 @@ enum VAXOp {
         }
     }
 
-    public String read(Disasm dis) {
+    public String read(VAXDisasm dis) {
         StringBuilder sb = new StringBuilder(mne);
         for (int i = 0; i < oprs.length; ++i) {
             sb.append(i == 0 ? " " : ",");
@@ -219,14 +219,14 @@ enum VAXOp {
     }
 }
 
-class Disasm extends Memory {
+class VAXDisasm extends Memory {
 
     private static final String[] regs = {
         "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
         "r8", "r9", "r10", "r11", "ap", "fp", "sp", "pc"
     };
 
-    public Disasm(String path) throws IOException {
+    public VAXDisasm(String path) throws IOException {
         super(path);
     }
 
@@ -309,7 +309,7 @@ public class Main {
                     System.out.println();
                 }
                 System.out.println(args[i]);
-                new Disasm(args[i]).disasm(System.out);
+                new VAXDisasm(args[i]).disasm(System.out);
             }
         } catch (Exception ex) {
             ex.printStackTrace(System.out);
