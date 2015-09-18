@@ -92,7 +92,7 @@ enum VAXType {
     }
 }
 
-enum VAXOps {
+enum VAXOp {
 
     HALT(0x00, ""), NOP(0x01, ""), REI(0x02, ""), BPT(0x03, ""),
     RET(0x04, ""), RSB(0x05, ""), LDPCTX(0x06, ""), SVPCTX(0x07, ""),
@@ -176,10 +176,10 @@ enum VAXOps {
     CVTHF(0xfdf6, "hf"), CVTHD(0xfdf7, "hd"),
     BUGL(0xfffd, "l"), BUGW(0xfffe, "w");
 
-    public static final VAXOps[] table = new VAXOps[0x10000];
+    public static final VAXOp[] table = new VAXOp[0x10000];
 
     static {
-        for (VAXOps op : VAXOps.values()) {
+        for (VAXOp op : VAXOp.values()) {
             table[op.op] = op;
         }
     }
@@ -188,7 +188,7 @@ enum VAXOps {
     public final String mne;
     private final VAXType[] oprs;
 
-    private VAXOps(int op, String oprs) {
+    private VAXOp(int op, String oprs) {
         this.op = op;
         this.mne = toString().toLowerCase();
         int len = oprs.length();
@@ -279,11 +279,11 @@ class Disasm extends Memory {
 
     public String disasm1() {
         int op = fetch();
-        if (op >= 0xfd || VAXOps.table[op] == null) {
+        if (op >= 0xfd || VAXOp.table[op] == null) {
             op = op << 8 | fetch();
         }
-        if (VAXOps.table[op] != null) {
-            return VAXOps.table[op].read(this);
+        if (VAXOp.table[op] != null) {
+            return VAXOp.table[op].read(this);
         }
         return String.format(".word 0x%x", op);
     }
