@@ -178,7 +178,7 @@ enum VAXOp {
     public static final VAXOp[] table = new VAXOp[0x10000];
     public final int op;
     public final String mne;
-    public final VAXType[] oprs;
+    public final char[] oprs;
 
     static {
         for (VAXOp op : VAXOp.values()) {
@@ -189,11 +189,7 @@ enum VAXOp {
     private VAXOp(int op, String oprs) {
         this.op = op;
         this.mne = toString().toLowerCase();
-        int len = oprs.length();
-        this.oprs = new VAXType[len];
-        for (int i = 0; i < len; ++i) {
-            this.oprs[i] = VAXType.table[oprs.charAt(i)];
-        }
+        this.oprs = oprs.toCharArray();
     }
 }
 
@@ -265,7 +261,7 @@ class VAXDisasm extends Memory {
         StringBuilder sb = new StringBuilder(op.mne);
         for (int i = 0; i < op.oprs.length; ++i) {
             sb.append(i == 0 ? " " : ",");
-            sb.append(getOpr(op.oprs[i]));
+            sb.append(getOpr(VAXType.table[op.oprs[i]]));
         }
         return sb.toString();
     }
