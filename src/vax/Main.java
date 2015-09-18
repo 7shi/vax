@@ -253,7 +253,7 @@ class VAXDisasm extends Memory {
         int opc = fetch();
         VAXOp op = VAXOp.table[opc];
         if (op == null) {
-            op = VAXOp.table[opc = (opc << 8 | fetch())];
+            op = VAXOp.table[opc = opc << 8 | fetch()];
         }
         if (op == null) {
             return String.format(".word 0x%x", opc);
