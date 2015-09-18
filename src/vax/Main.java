@@ -80,33 +80,20 @@ class Memory {
 
 enum VAXType {
 
-    BYTE, WORD, LONG, QWORD, OWORD,
-    FFLOAT, DFLOAT, GFLOAT, HFLOAT,
-    RELB, RELW;
+    BYTE('b', 1, ""), WORD('w', 2, ""), LONG('l', 4, ""),
+    QWORD('q', 8, ""), OWORD('o', 16, ""),
+    FFLOAT('f', 4, " [f-float]"), DFLOAT('d', 8, " [d-float]"),
+    GFLOAT('g', 8, " [g-float]"), HFLOAT('h', 16, " [h-float]"),
+    RELB('1', 1, ""), RELW('2', 2, "");
 
-    private static final int[] typeLen = {
-        1, 2, 4, 8, 16, 4, 8, 8, 16, 1, 2
-    };
-    private static final String[] typeSfx = {
-        "", "", "", "", "",
-        " [f-float]", " [d-float]", " [g-float]", " [h-float]"
-    };
-    private static final String sfx = "bwlqofdgh12";
+    public final char suffix;
+    public final int size;
+    public final String valueSuffix;
 
-    public int getLength() {
-        return typeLen[ordinal()];
-    }
-
-    public String getValueSuffix() {
-        return typeSfx[ordinal()];
-    }
-
-    public char getSuffix() {
-        return sfx.charAt(ordinal());
-    }
-
-    public static VAXType fromSuffix(char ch) {
-        return VAXType.values()[sfx.indexOf(ch)];
+    private VAXType(char suffix, int size, String valueSuffix) {
+        this.suffix = suffix;
+        this.size = size;
+        this.valueSuffix = valueSuffix;
     }
 }
 
@@ -205,6 +192,14 @@ enum VAXOps {
 
 class VAXOp {
 
+    private static final VAXType[] types = new VAXType[128];
+
+    static {
+        for (VAXType t : VAXType.values()) {
+            types[(int) t.suffix] = t;
+        }
+    }
+
     private final String mne;
     private final int op;
     private final VAXType[] oprs;
@@ -215,7 +210,7 @@ class VAXOp {
         int len = op.oprs.length();
         this.oprs = new VAXType[len];
         for (int i = 0; i < len; ++i) {
-            this.oprs[i] = VAXType.fromSuffix(op.oprs.charAt(i));
+            this.oprs[i] = types[op.oprs.charAt(i)];
         }
     }
 
@@ -233,7 +228,7 @@ class VAXOp {
             switch (t) {
                 case RELB:
                 case RELW: {
-                    int r = dis.fetchSigned(t.getLength());
+                    int r = dis.fetchSigned(t.size);
                     sb.append(String.format("0x%x", dis.pc + r));
                     break;
                 }
@@ -282,7 +277,7 @@ class Disasm extends Memory {
             case 1:
             case 2:
             case 3:
-                return String.format("$0x%x%s", b, t.getValueSuffix());
+                return String.format("$0x%x%s", b, t.valueSuffix);
             case 4:
                 return getOpr(t) + "[" + r + "]";
             case 5:
@@ -293,7 +288,7 @@ class Disasm extends Memory {
                 return "-(" + r + ")";
             case 8:
                 if (b2 == 15) {
-                    return "$" + fetchHex(t.getLength(), t.getValueSuffix());
+                    return "$" + fetchHex(t.size, t.valueSuffix);
                 } else {
                     return "(" + r + ")+";
                 }
