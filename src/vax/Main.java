@@ -204,7 +204,7 @@ class VAXDisasm extends Memory {
         super(path);
     }
 
-    String getOpr(VAXType t) {
+    public String getOpr(VAXType t) {
         if (t == VAXType.RELB || t == VAXType.RELW) {
             int rel = fetchSigned(t.size);
             return String.format("0x%x", pc + rel);
@@ -266,7 +266,7 @@ class VAXDisasm extends Memory {
         return sb.toString();
     }
 
-    void disasm(PrintStream out) {
+    public void disasm(PrintStream out) {
         while (pc < text.length) {
             int oldpc = pc;
             String asm = disasm1();
