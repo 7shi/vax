@@ -260,7 +260,7 @@ class Disasm extends Memory {
         }
     }
 
-    private static final String[] REGS = {
+    private static final String[] regs = {
         "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
         "r8", "r9", "r10", "r11", "ap", "fp", "sp", "pc"
     };
@@ -271,7 +271,7 @@ class Disasm extends Memory {
 
     String getOpr(VAXType t) {
         int b = fetch(), b1 = b >> 4, b2 = b & 15;
-        String r = REGS[b2];
+        String r = regs[b2];
         switch (b1) {
             case 0:
             case 1:
