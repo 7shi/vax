@@ -201,12 +201,10 @@ class VAXOp {
     }
 
     private final String mne;
-    private final int op;
     private final VAXType[] oprs;
 
     public VAXOp(VAXOps op) {
         this.mne = op.toString().toLowerCase();
-        this.op = op.op;
         int len = op.oprs.length();
         this.oprs = new VAXType[len];
         for (int i = 0; i < len; ++i) {
@@ -216,7 +214,6 @@ class VAXOp {
 
     public VAXOp(int op) {
         this.mne = String.format(".word 0x%x", op);
-        this.op = op;
         this.oprs = new VAXType[0];
     }
 
