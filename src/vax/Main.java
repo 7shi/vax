@@ -74,16 +74,15 @@ enum VAXType {
     RELB('1', 1, ""), RELW('2', 2, "");
 
     public static final VAXType[] table = new VAXType[128];
+    public final char suffix;
+    public final int size;
+    public final String valueSuffix;
 
     static {
         for (VAXType t : VAXType.values()) {
             table[(int) t.suffix] = t;
         }
     }
-
-    public final char suffix;
-    public final int size;
-    public final String valueSuffix;
 
     private VAXType(char suffix, int size, String valueSuffix) {
         this.suffix = suffix;
@@ -177,16 +176,15 @@ enum VAXOp {
     BUGL(0xfffd, "l"), BUGW(0xfffe, "w");
 
     public static final VAXOp[] table = new VAXOp[0x10000];
+    public final int op;
+    public final String mne;
+    public final VAXType[] oprs;
 
     static {
         for (VAXOp op : VAXOp.values()) {
             table[op.op] = op;
         }
     }
-
-    public final int op;
-    public final String mne;
-    public final VAXType[] oprs;
 
     private VAXOp(int op, String oprs) {
         this.op = op;
@@ -211,6 +209,9 @@ class VAXDisasm extends Memory {
     }
 
     String getOpr(VAXType t) {
+        if (t == VAXType.RELB || t == VAXType.RELW) {
+            return String.format("0x%x", pc + fetchSigned(t.size));
+        }
         int b = fetch(), b1 = b >> 4, b2 = b & 15;
         String r = regs[b2];
         switch (b1) {
@@ -239,12 +240,7 @@ class VAXDisasm extends Memory {
                 } else {
                     return "@(" + r + ")+"; // @?
                 }
-            case 0xa:
-            case 0xb:
-            case 0xc:
-            case 0xd:
-            case 0xe:
-            case 0xf: {
+            default: {
                 String prefix = (b1 & 1) == 1 ? "*" : "";
                 int disp = fetchSigned(1 << ((b1 - 0xa) >> 1));
                 if (b2 == 15) {
@@ -254,7 +250,6 @@ class VAXDisasm extends Memory {
                 }
             }
         }
-        return "???";
     }
 
     public String disasm1() {
@@ -269,18 +264,7 @@ class VAXDisasm extends Memory {
         StringBuilder sb = new StringBuilder(op.mne);
         for (int i = 0; i < op.oprs.length; ++i) {
             sb.append(i == 0 ? " " : ",");
-            VAXType t = op.oprs[i];
-            switch (t) {
-                case RELB:
-                case RELW: {
-                    int r = fetchSigned(t.size);
-                    sb.append(String.format("0x%x", pc + r));
-                    break;
-                }
-                default:
-                    sb.append(getOpr(t));
-                    break;
-            }
+            sb.append(getOpr(op.oprs[i]));
         }
         return sb.toString();
     }
