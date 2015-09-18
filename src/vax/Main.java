@@ -176,34 +176,25 @@ enum VAXOps {
     CVTHF(0xfdf6, "hf"), CVTHD(0xfdf7, "hd"),
     BUGL(0xfffd, "l"), BUGW(0xfffe, "w");
 
-    public static final VAXOp[] table = new VAXOp[0x10000];
+    public static final VAXOps[] table = new VAXOps[0x10000];
 
     static {
         for (VAXOps op : VAXOps.values()) {
-            table[op.op] = new VAXOp(op);
+            table[op.op] = op;
         }
     }
 
     public final int op;
-    public final String oprs;
+    public final String mne;
+    private final VAXType[] oprs;
 
     private VAXOps(int op, String oprs) {
         this.op = op;
-        this.oprs = oprs;
-    }
-}
-
-class VAXOp {
-
-    private final String mne;
-    private final VAXType[] oprs;
-
-    public VAXOp(VAXOps op) {
-        this.mne = op.toString().toLowerCase();
-        int len = op.oprs.length();
+        this.mne = toString().toLowerCase();
+        int len = oprs.length();
         this.oprs = new VAXType[len];
         for (int i = 0; i < len; ++i) {
-            this.oprs[i] = VAXType.table[op.oprs.charAt(i)];
+            this.oprs[i] = VAXType.table[oprs.charAt(i)];
         }
     }
 
