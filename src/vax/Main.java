@@ -210,7 +210,8 @@ class VAXDisasm extends Memory {
 
     String getOpr(VAXType t) {
         if (t == VAXType.RELB || t == VAXType.RELW) {
-            return String.format("0x%x", pc + fetchSigned(t.size));
+            int rel = fetchSigned(t.size);
+            return String.format("0x%x", pc + rel);
         }
         int b = fetch(), b1 = b >> 4, b2 = b & 15;
         String r = regs[b2];
@@ -253,13 +254,13 @@ class VAXDisasm extends Memory {
     }
 
     public String disasm1() {
-        int b = fetch();
-        VAXOp op = VAXOp.table[b];
+        int opc = fetch();
+        VAXOp op = VAXOp.table[opc];
         if (op == null) {
-            op = VAXOp.table[b << 8 | fetch()];
+            op = VAXOp.table[opc = (opc << 8 | fetch())];
         }
         if (op == null) {
-            return String.format(".word 0x%x", op);
+            return String.format(".word 0x%x", opc);
         }
         StringBuilder sb = new StringBuilder(op.mne);
         for (int i = 0; i < op.oprs.length; ++i) {
