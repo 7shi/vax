@@ -24,37 +24,31 @@ class Memory {
         return Byte.toUnsignedInt(text[pc++]);
     }
 
-    public int fetchSigned(VAXType t) {
-        int ret = 0;
-        switch (t) {
-            case BYTE:
-            case RELB:
-                ret = text[pc++];
-                break;
-            case WORD:
-            case RELW:
-                ret = buf.getShort(pc);
-                pc += 2;
-                break;
-            case LONG:
-                ret = buf.getInt(pc);
-                pc += 4;
-                break;
+    public int fetchSigned(int size) {
+        int oldpc = pc;
+        pc += size;
+        switch (size) {
+            case 1:
+                return text[oldpc];
+            case 2:
+                return buf.getShort(oldpc);
+            case 4:
+                return buf.getInt(oldpc);
+            default:
+                return 0;
         }
-        return ret;
     }
 
-    public String fetchHex(VAXType t) {
-        int len = t.getLength();
-        int[] bs = new int[len];
-        for (int i = 0; i < len; ++i) {
+    public String fetchHex(int size, String suffix) {
+        int[] bs = new int[size];
+        for (int i = 0; i < size; ++i) {
             bs[i] = fetch();
         }
         StringBuilder sb = new StringBuilder("0x");
-        for (int i = len - 1; i >= 0; --i) {
+        for (int i = size - 1; i >= 0; --i) {
             sb.append(String.format("%02x", bs[i]));
         }
-        sb.append(t.getValueSuffix());
+        sb.append(suffix);
         return sb.toString();
     }
 
@@ -91,7 +85,7 @@ enum VAXType {
     RELB, RELW;
 
     private static final int[] typeLen = {
-        1, 2, 4, 8, 16, 4, 8, 8, 16
+        1, 2, 4, 8, 16, 4, 8, 8, 16, 1, 2
     };
     private static final String[] typeSfx = {
         "", "", "", "", "",
@@ -239,7 +233,7 @@ class VAXOp {
             switch (t) {
                 case RELB:
                 case RELW: {
-                    int r = dis.fetchSigned(t);
+                    int r = dis.fetchSigned(t.getLength());
                     sb.append(String.format("0x%x", dis.pc + r));
                     break;
                 }
@@ -299,13 +293,13 @@ class Disasm extends Memory {
                 return "-(" + r + ")";
             case 8:
                 if (b2 == 15) {
-                    return "$" + fetchHex(t);
+                    return "$" + fetchHex(t.getLength(), t.getValueSuffix());
                 } else {
                     return "(" + r + ")+";
                 }
             case 9:
                 if (b2 == 15) {
-                    return "*" + fetchHex(VAXType.LONG);
+                    return "*" + fetchHex(4, "");
                 } else {
                     return "@(" + r + ")+"; // @?
                 }
@@ -316,7 +310,7 @@ class Disasm extends Memory {
             case 0xe:
             case 0xf: {
                 String prefix = (b1 & 1) == 1 ? "*" : "";
-                int disp = fetchSigned(VAXType.values()[(b1 - 0xa) >> 1]);
+                int disp = fetchSigned(1 << ((b1 - 0xa) >> 1));
                 if (b2 == 15) {
                     return String.format("%s0x%x", prefix, pc + disp);
                 } else {
