@@ -7,6 +7,7 @@ import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -433,14 +434,35 @@ class VAX {
     private final ByteBuffer buf;
     private final VAXDisasm dis;
 
-    public VAX(AOut aout) {
+    public VAX(AOut aout, String[] args) {
         System.arraycopy(aout.text, 0, mem, 0, aout.a_text);
         int dstart = (aout.a_text + 0x1ff) & ~0x1ff;
         System.arraycopy(aout.data, 0, mem, dstart, aout.a_data);
         r[PC] = aout.a_entry + 2;
         buf = ByteBuffer.wrap(mem).order(ByteOrder.LITTLE_ENDIAN);
         dis = new VAXDisasm(buf, aout);
-        r[SP] = mem.length - 4;
+        setArgs(args);
+    }
+
+    private void setArgs(String[] args) {
+        int len = 0;
+        byte[][] bargs = new byte[args.length][];
+        for (int i = 0; i < args.length; ++i) {
+            bargs[i] = args[i].getBytes(StandardCharsets.US_ASCII);
+            len += bargs[i].length + 1;
+        }
+        int s = mem.length - ((len + 1) & ~1);
+        buf.putLong(s - 8, 0);
+        int argv = s - (args.length + 2) * 4;
+        r[SP] = argv - 4;
+        buf.putInt(r[SP], args.length); // argc
+        for (byte[] barg : bargs) {
+            buf.putInt(argv, s);
+            argv += 4;
+            System.arraycopy(barg, 0, mem, s, barg.length);
+            s += barg.length + 1;
+            mem[s - 1] = 0;
+        }
     }
 
     public int fetch() {
@@ -650,14 +672,15 @@ public class Main {
     public static void main(String[] args) {
         boolean debug = false;
         String aout = null;
-        for (String arg : args) {
+        String[] args2 = null;
+        for (int i = 0; i < args.length; ++i) {
+            String arg = args[i];
             if (arg.equals("-d")) {
                 debug = true;
             } else {
-                if (aout == null) {
-                    aout = arg;
-                    break;
-                }
+                aout = arg;
+                args2 = Arrays.copyOfRange(args, i, args.length);
+                break;
             }
         }
         if (aout == null) {
@@ -665,7 +688,7 @@ public class Main {
             System.exit(1);
         }
         try {
-            new VAX(new AOut(aout)).run(debug);
+            new VAX(new AOut(aout), args2).run(debug);
         } catch (Exception ex) {
             ex.printStackTrace(System.err);
             System.exit(1);
