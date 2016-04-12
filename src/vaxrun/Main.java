@@ -177,10 +177,18 @@ class VAX {
             case 0x8f:
                 return fetchSigned(size);
         }
-        int t = b >> 4, n = b & 15;
+        int t = b >> 4, n = b & 15, disp;
         switch (t) {
             case 5: // r
                 return r[n];
+            case 6: // (r)
+                return getSigned(r[n], size);
+            case 0xa: // b(r)
+                disp = fetchSigned(1);
+                return getSigned(r[n] + disp, size);
+            case 0xe: // l(r)
+                disp = fetchSigned(4);
+                return getSigned(r[n] + disp, size);
         }
         throw error("%08x: unknown operand %02x", r[PC] - 1, b);
     }
