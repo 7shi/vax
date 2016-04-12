@@ -480,8 +480,9 @@ class VAX {
         throw new Exception("invalid size " + size);
     }
 
-    public String getString(int addr, int length) throws UnsupportedEncodingException {
-        return new String(Arrays.copyOfRange(mem, addr, addr + length), "ASCII");
+    public String getString(int addr, int length) {
+        byte[] bytes = Arrays.copyOfRange(mem, addr, addr + length);
+        return new String(bytes, StandardCharsets.US_ASCII);
     }
 
     public Exception error(String format, Object... args) {
