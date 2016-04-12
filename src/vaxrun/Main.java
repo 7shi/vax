@@ -187,7 +187,7 @@ class VAX {
 
     public void setOperand(int size, int value) throws Exception {
         int b = fetch();
-        int t = b >> 4, n = b & 15;
+        int t = b >> 4, n = b & 15, disp;
         switch (t) {
             case 5: // r
                 r[n] = value;
@@ -196,7 +196,8 @@ class VAX {
                 setSigned(r[n], size, value);
                 return;
             case 0xa: // b(r)
-                setSigned(r[n] + fetchSigned(1), size, value);
+                disp = fetchSigned(1);
+                setSigned(r[n] + disp, size, value);
                 return;
         }
         throw error("%08x: unknown operand %02x\n", r[PC] - 1, b);
