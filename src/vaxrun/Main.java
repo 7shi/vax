@@ -665,6 +665,10 @@ class VAX {
                     case 0xd0: // movl
                         setOperand(4, getOperand(4, false));
                         break;
+                    case 0xd5: // tstl
+                        s = getOperand(4, false);
+                        setNZVC(s < 0, s == 0, v, c); // CHECK
+                        break;
                     default:
                         throw error("%08x: unknown opcode %02x", r[PC] - 1, opcode);
                 }
