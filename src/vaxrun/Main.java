@@ -182,7 +182,7 @@ class VAX {
             case 5: // r
                 return r[n];
         }
-        throw error("%08x: unknown operand %02x\n", r[PC] - 1, b);
+        throw error("%08x: unknown operand %02x", r[PC] - 1, b);
     }
 
     public void setOperand(int size, int value) throws Exception {
@@ -204,7 +204,7 @@ class VAX {
                 setSigned(r[n] + disp, size, value);
                 return;
         }
-        throw error("%08x: unknown operand %02x\n", r[PC] - 1, b);
+        throw error("%08x: unknown operand %02x", r[PC] - 1, b);
     }
 
     public void chmk() throws Exception {
@@ -217,7 +217,7 @@ class VAX {
                 System.out.print(getString(buf.getInt(r[AP] + 8), buf.getInt(r[AP] + 12)));
                 return;
         }
-        throw error("%08x: unknown syscall %02x\n", r[PC] - 1, syscall);
+        throw error("%08x: unknown syscall %02x", r[PC] - 1, syscall);
     }
 
     public void run() throws Exception {
@@ -237,7 +237,7 @@ class VAX {
                     setOperand(4, getOperand(4));
                     break;
                 default:
-                    throw error("%08x: unknown opcode %02x\n", r[PC] - 1, opcode);
+                    throw error("%08x: unknown opcode %02x", r[PC] - 1, opcode);
 
             }
         }
