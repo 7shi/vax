@@ -115,6 +115,7 @@ class AOut {
 
 class VAX {
 
+    public final int AP = 12, FP = 13, SP = 14, PC = 15;
     private final byte[] mem = new byte[0x40000];
     private final int[] r = new int[16];
     private final ByteBuffer buf;
@@ -123,17 +124,17 @@ class VAX {
         System.arraycopy(aout.text, 0, mem, 0, aout.a_text);
         int dstart = (aout.a_text + 0x1ff) & ~0x1ff;
         System.arraycopy(aout.data, 0, mem, dstart, aout.a_data);
-        r[15] = aout.a_entry + 2;
+        r[PC] = aout.a_entry + 2;
         buf = ByteBuffer.wrap(mem).order(ByteOrder.LITTLE_ENDIAN);
     }
 
     public int fetch() {
-        return Byte.toUnsignedInt(mem[r[15]++]);
+        return Byte.toUnsignedInt(mem[r[PC]++]);
     }
 
     public int fetchSigned(int size) throws Exception {
-        int pc = r[15];
-        r[15] += size;
+        int pc = r[PC];
+        r[PC] += size;
         return getSigned(pc, size);
     }
 
@@ -163,7 +164,7 @@ class VAX {
             case 0x8f:
                 return fetchSigned(size);
         }
-        throw error("%08x: unknown operand %02x\n", r[15] - 1, b);
+        throw error("%08x: unknown operand %02x\n", r[PC] - 1, b);
     }
 
     public void setOperand(int size, int value) throws Exception {
@@ -174,20 +175,20 @@ class VAX {
                 r[n] = value;
                 return;
         }
-        throw error("%08x: unknown operand %02x\n", r[15] - 1, b);
+        throw error("%08x: unknown operand %02x\n", r[PC] - 1, b);
     }
 
     public void chmk() throws Exception {
         int syscall = fetch();
         switch (syscall) {
             case 1: // exit
-                System.exit(buf.getInt(r[12] + 4));
+                System.exit(buf.getInt(r[AP] + 4));
                 return;
             case 4:  // write
-                System.out.print(getString(buf.getInt(r[12] + 8), buf.getInt(r[12] + 12)));
+                System.out.print(getString(buf.getInt(r[AP] + 8), buf.getInt(r[AP] + 12)));
                 return;
         }
-        throw error("%08x: unknown syscall %02x\n", r[15] - 1, syscall);
+        throw error("%08x: unknown syscall %02x\n", r[PC] - 1, syscall);
     }
 
     public void run() throws Exception {
@@ -201,7 +202,7 @@ class VAX {
                     setOperand(4, getOperand(4));
                     break;
                 default:
-                    throw error("%08x: unknown opcode %02x\n", r[15] - 1, opcode);
+                    throw error("%08x: unknown opcode %02x\n", r[PC] - 1, opcode);
 
             }
         }
