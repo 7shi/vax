@@ -199,6 +199,10 @@ class VAX {
                 disp = fetchSigned(1);
                 setSigned(r[n] + disp, size, value);
                 return;
+            case 0xe: // l(r)
+                disp = fetchSigned(4);
+                setSigned(r[n] + disp, size, value);
+                return;
         }
         throw error("%08x: unknown operand %02x\n", r[PC] - 1, b);
     }
