@@ -651,6 +651,12 @@ class VAX {
                 }
                 pc = r[PC];
                 switch (opcode = fetch()) {
+                    case 0x12: // bneq
+                        s = fetchSigned(1);
+                        if (!z) {
+                            r[PC] += s;
+                        }
+                        break;
                     case 0x82: // subb2
                         s = getOperand(1, false);
                         setOperand(1, getOperand(1, true) - s);
