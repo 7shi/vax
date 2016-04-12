@@ -184,10 +184,10 @@ class VAX {
         int b = fetch();
         int t = b >> 4, n = b & 15;
         switch (t) {
-            case 5:
+            case 5: // r
                 r[n] = value;
                 return;
-            case 6:
+            case 6: // (r)
                 setSigned(r[n], size, value);
                 return;
         }
