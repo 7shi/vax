@@ -10,6 +10,32 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
+enum VAXType {
+
+    BYTE('b', 1, ""), WORD('w', 2, ""), LONG('l', 4, ""),
+    QWORD('q', 8, ""), OWORD('o', 16, ""),
+    FFLOAT('f', 4, " [f-float]"), DFLOAT('d', 8, " [d-float]"),
+    GFLOAT('g', 8, " [g-float]"), HFLOAT('h', 16, " [h-float]"),
+    RELB('1', 1, ""), RELW('2', 2, "");
+
+    public static final VAXType[] table = new VAXType[128];
+    public final char suffix;
+    public final int size;
+    public final String valueSuffix;
+
+    static {
+        for (VAXType t : VAXType.values()) {
+            table[(int) t.suffix] = t;
+        }
+    }
+
+    private VAXType(char suffix, int size, String valueSuffix) {
+        this.suffix = suffix;
+        this.size = size;
+        this.valueSuffix = valueSuffix;
+    }
+}
+
 enum VAXOp {
 
     HALT(0x00, ""), NOP(0x01, ""), REI(0x02, ""), BPT(0x03, ""),
@@ -141,6 +167,148 @@ class Symbol {
     }
 }
 
+class VAXDisasm {
+
+    private static final String[] regs = {
+        "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
+        "r8", "r9", "r10", "r11", "ap", "fp", "sp", "pc"
+    };
+
+    private final ByteBuffer buf;
+    private int pc;
+    private AOut aout;
+
+    public VAXDisasm(ByteBuffer buf, AOut aout) {
+        this.buf = buf;
+        this.aout = aout;
+    }
+
+    public int fetch() {
+        return Byte.toUnsignedInt(buf.get(pc++));
+    }
+
+    public int fetchSigned(int size) {
+        int oldpc = pc;
+        pc += size;
+        switch (size) {
+            case 1:
+                return buf.get(oldpc);
+            case 2:
+                return buf.getShort(oldpc);
+            case 4:
+                return buf.getInt(oldpc);
+        }
+        return 0;
+    }
+
+    public String fetchHex(int size, String suffix) {
+        int[] bs = new int[size];
+        for (int i = 0; i < size; ++i) {
+            bs[i] = fetch();
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int i = size - 1; i >= 0; --i) {
+            sb.append(String.format("%02x", bs[i]));
+        }
+        String x = sb.toString();
+        int p = 0;
+        while (p < x.length() - 1 && x.charAt(p) == '0') {
+            ++p;
+        }
+        String xx = x.substring(p);
+        String prefix = "0x";
+        if (xx.length() == 1 && Character.isDigit(xx.charAt(0))) {
+            prefix = "";
+        }
+        return prefix + x.substring(p) + suffix;
+    }
+
+    public String getOpr(VAXType t) {
+        if (t == VAXType.RELB || t == VAXType.RELW) {
+            int rel = fetchSigned(t.size);
+            return String.format("0x%x", pc + rel);
+        }
+        int b = fetch(), b1 = b >> 4, b2 = b & 15;
+        String r = regs[b2];
+        switch (b1) {
+            case 0:
+            case 1:
+            case 2:
+            case 3:
+                return "$" + hex(b) + t.valueSuffix;
+            case 4:
+                return getOpr(t) + "[" + r + "]";
+            case 5:
+                return r;
+            case 6:
+                return "(" + r + ")";
+            case 7:
+                return "-(" + r + ")";
+            case 8:
+                if (b2 == 15) {
+                    return "$" + fetchHex(t.size, t.valueSuffix);
+                } else {
+                    return "(" + r + ")+";
+                }
+            case 9:
+                if (b2 == 15) {
+                    return "*" + addr(fetchSigned(4));
+                } else {
+                    return "*(" + r + ")+";
+                }
+            default: {
+                String prefix = (b1 & 1) == 1 ? "*" : "";
+                int disp = fetchSigned(1 << ((b1 - 0xa) >> 1));
+                if (b2 == 15) {
+                    return prefix + addr(pc + disp);
+                } else {
+                    return String.format("%s%s(%s)", prefix, hex(disp), r);
+                }
+            }
+        }
+    }
+
+    public String disasm1(int addr) {
+        pc = addr;
+        int opc = fetch();
+        VAXOp op = VAXOp.table[opc];
+        if (op == null) {
+            op = VAXOp.table[opc = opc << 8 | fetch()];
+        }
+        if (op == null) {
+            return String.format(".word 0x%x", opc);
+        }
+        StringBuilder sb = new StringBuilder(op.mne);
+        for (int i = 0; i < op.oprs.length; ++i) {
+            sb.append(i == 0 ? " " : ",");
+            sb.append(getOpr(VAXType.table[op.oprs[i]]));
+        }
+        return sb.toString();
+    }
+
+    public String word1() {
+        return ".word " + hex(Short.toUnsignedInt((short) fetchSigned(2)));
+    }
+
+    public String addr(int ad) {
+        String ret = String.format("0x%x", ad);
+        if (aout != null && aout.symT.containsKey(ad)) {
+            ret += "<" + aout.symT.get(ad) + ">";
+        }
+        return ret;
+    }
+
+    public static String hex(int v) {
+        String sign = "";
+        if (v < 0) {
+            sign = "-";
+            v = -v;
+        }
+        String x = v < 10 ? "" : "0x";
+        return String.format("%s%s%x", sign, x, v);
+    }
+}
+
 class AOut {
 
     public final ByteBuffer header;
@@ -219,6 +387,7 @@ class VAX {
     private final byte[] mem = new byte[0x40000];
     private final int[] r = new int[16];
     private final ByteBuffer buf;
+    private final VAXDisasm dis;
 
     public VAX(AOut aout) {
         System.arraycopy(aout.text, 0, mem, 0, aout.a_text);
@@ -226,6 +395,7 @@ class VAX {
         System.arraycopy(aout.data, 0, mem, dstart, aout.a_data);
         r[PC] = aout.a_entry + 2;
         buf = ByteBuffer.wrap(mem).order(ByteOrder.LITTLE_ENDIAN);
+        dis = new VAXDisasm(buf, aout);
     }
 
     public int fetch() {
@@ -356,9 +526,12 @@ class VAX {
         throw error("%08x: unknown syscall %02x", r[PC] - 1, syscall);
     }
 
-    public void run() throws Exception {
+    public void run(boolean debug) throws Exception {
         int opcode, s;
         for (;;) {
+            if (debug) {
+                System.err.printf("%08x: %s\n", r[PC], dis.disasm1(r[PC]));
+            }
             switch (opcode = fetch()) {
                 case 0x82: // subb2
                     s = getOperand(1, false);
@@ -394,12 +567,24 @@ class VAX {
 public class Main {
 
     public static void main(String[] args) {
-        if (args.length != 1) {
-            System.err.println("usage: vaxrun a.out");
+        boolean debug = false;
+        String aout = null;
+        for (String arg : args) {
+            if (arg.equals("-d")) {
+                debug = true;
+            } else {
+                if (aout == null) {
+                    aout = arg;
+                    break;
+                }
+            }
+        }
+        if (aout == null) {
+            System.err.println("usage: vaxrun [-d] a.out");
             System.exit(1);
         }
         try {
-            new VAX(new AOut(args[0])).run();
+            new VAX(new AOut(aout)).run(debug);
         } catch (Exception ex) {
             ex.printStackTrace(System.err);
             System.exit(1);
