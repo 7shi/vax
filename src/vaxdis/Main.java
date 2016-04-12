@@ -467,7 +467,7 @@ public class Main {
                 new VAXDisasm(aout).disasm(System.out);
             }
         } catch (Exception ex) {
-            ex.printStackTrace(System.out);
+            ex.printStackTrace(System.err);
         }
     }
 }
