@@ -431,6 +431,7 @@ class VAX {
     public static final int AP = 12, FP = 13, SP = 14, PC = 15;
     private final byte[] mem = new byte[0x40000];
     private final int[] r = new int[16];
+    private boolean n, z, v, c;
     private final ByteBuffer buf;
     private final VAXDisasm dis;
 
@@ -463,6 +464,13 @@ class VAX {
             s += barg.length + 1;
             mem[s - 1] = 0;
         }
+    }
+
+    private void setNZVC(boolean n, boolean z, boolean v, boolean c) {
+        this.n = n;
+        this.z = z;
+        this.v = v;
+        this.c = c;
     }
 
     public int fetch() {
@@ -518,16 +526,16 @@ class VAX {
     public int getAddr(int size) throws Exception {
         int pc = r[PC];
         int b = fetch();
-        int t = b >> 4, n = b & 15, disp;
+        int t = b >> 4, rn = b & 15, disp;
         switch (t) {
             case 6: // (r)
-                return r[n];
+                return r[rn];
             case 0xa: // b(r)
                 disp = fetchSigned(1);
-                return r[n] + disp;
+                return r[rn] + disp;
             case 0xe: // l(r)
                 disp = fetchSigned(4);
-                return r[n] + disp;
+                return r[rn] + disp;
         }
         throw error("%08x: not addr %02x", pc, b);
     }
@@ -535,7 +543,7 @@ class VAX {
     public int getOperand(int size, boolean pre) throws Exception {
         int pc = r[PC];
         int b = Byte.toUnsignedInt(mem[pc++]);
-        int t = b >> 4, n = b & 15, len = 0, ret = 0;
+        int t = b >> 4, rn = b & 15, len = 0, ret = 0;
         switch (t) {
             case 0:
             case 1:
@@ -546,25 +554,25 @@ class VAX {
                 break;
             case 5: // r
                 len = 1;
-                ret = reg(n, len);
+                ret = reg(rn, len);
                 break;
             case 6: // (r)
                 len = 1;
-                ret = getSigned(reg(n, len), size);
+                ret = getSigned(reg(rn, len), size);
                 break;
             case 8:
-                if (n == 15) {
+                if (rn == 15) {
                     len = 1 + size;
                     ret = getSigned(pc, size);
                 }
                 break;
             case 0xa: // b(r)
                 len = 2;
-                ret = getSigned(reg(n, len) + mem[pc], size);
+                ret = getSigned(reg(rn, len) + mem[pc], size);
                 break;
             case 0xe: // l(r)
                 len = 5;
-                ret = getSigned(reg(n, len) + buf.getInt(pc), size);
+                ret = getSigned(reg(rn, len) + buf.getInt(pc), size);
                 break;
         }
         if (len == 0) {
@@ -578,21 +586,21 @@ class VAX {
 
     public void setOperand(int size, int value) throws Exception {
         int b = fetch();
-        int t = b >> 4, n = b & 15, disp;
+        int t = b >> 4, rn = b & 15, disp;
         switch (t) {
             case 5: // r
-                r[n] = value;
+                r[rn] = value;
                 return;
             case 6: // (r)
-                setSigned(r[n], size, value);
+                setSigned(r[rn], size, value);
                 return;
             case 0xa: // b(r)
                 disp = fetchSigned(1);
-                setSigned(r[n] + disp, size, value);
+                setSigned(r[rn] + disp, size, value);
                 return;
             case 0xe: // l(r)
                 disp = fetchSigned(4);
-                setSigned(r[n] + disp, size, value);
+                setSigned(r[rn] + disp, size, value);
                 return;
         }
         throw error("%08x: unknown operand %02x", r[PC] - 1, b);
@@ -612,9 +620,11 @@ class VAX {
     }
 
     public void debug() {
-        System.err.printf("%08x %08x %08x %08x-%08x %08x %08x %08x-%08x %08x %08x %08x-%08x %08x %08x %08x %s\n",
+        System.err.printf("%08x %08x %08x %08x-%08x %08x %08x %08x-%08x %08x %08x %08x-%08x %08x %08x %c%c%c%c %08x %s\n",
                 r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7],
-                r[8], r[9], r[10], r[11], r[12], r[13], r[14], r[15], dis.disasm1(r[PC]));
+                r[8], r[9], r[10], r[11], r[12], r[13], r[14],
+                n ? 'N' : '-', z ? 'Z' : '-', v ? 'V' : '-', c ? 'C' : '-',
+                r[15], dis.disasm1(r[PC]));
     }
 
     public void run(boolean debug) throws Exception {
@@ -622,8 +632,7 @@ class VAX {
             System.err.print("   r0       r1       r2       r3   -");
             System.err.print("   r4       r5       r6       r7   -");
             System.err.print("   r8       r9       r10      r11  -");
-            System.err.print("   ap       fp       sp       pc    ");
-            System.err.println("disasm");
+            System.err.println("   ap       fp       sp    flag    pc    disasm");
         }
         int pc = r[PC], opcode, s;
         try {
