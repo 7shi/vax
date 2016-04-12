@@ -214,8 +214,14 @@ class VAX {
         int opcode;
         for (;;) {
             switch (opcode = fetch()) {
+                case 0x90: // movb
+                    setOperand(1, getOperand(1));
+                    break;
                 case 0xbc: // chmk
                     chmk();
+                    break;
+                case 0xb0: // movw
+                    setOperand(2, getOperand(2));
                     break;
                 case 0xd0: // movl
                     setOperand(4, getOperand(4));
