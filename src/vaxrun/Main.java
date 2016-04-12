@@ -148,6 +148,21 @@ class VAX {
         throw new Exception("invalid size " + size);
     }
 
+    public void setSigned(int addr, int size, int value) throws Exception {
+        switch (size) {
+            case 1:
+                mem[addr] = (byte) value;
+                return;
+            case 2:
+                buf.putShort(addr, (short) value);
+                return;
+            case 4:
+                buf.putInt(addr, value);
+                return;
+        }
+        throw new Exception("invalid size " + size);
+    }
+
     public String getString(int addr, int length) throws UnsupportedEncodingException {
         return new String(Arrays.copyOfRange(mem, addr, addr + length), "ASCII");
     }
@@ -171,6 +186,9 @@ class VAX {
         switch (t) {
             case 5:
                 r[n] = value;
+                return;
+            case 6:
+                setSigned(r[n], size, value);
                 return;
         }
         throw error("%08x: unknown operand %02x\n", r[PC] - 1, b);
