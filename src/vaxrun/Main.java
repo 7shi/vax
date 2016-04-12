@@ -492,6 +492,23 @@ class VAX {
         return n == 15 ? r[n] + offset : r[n];
     }
 
+    public int getAddr(int size) throws Exception {
+        int pc = r[PC];
+        int b = fetch();
+        int t = b >> 4, n = b & 15, disp;
+        switch (t) {
+            case 6: // (r)
+                return r[n];
+            case 0xa: // b(r)
+                disp = fetchSigned(1);
+                return r[n] + disp;
+            case 0xe: // l(r)
+                disp = fetchSigned(4);
+                return r[n] + disp;
+        }
+        throw error("%08x: not addr %02x", pc, b);
+    }
+
     public int getOperand(int size, boolean pre) throws Exception {
         int pc = r[PC];
         int b = Byte.toUnsignedInt(mem[pc++]);
@@ -599,6 +616,9 @@ class VAX {
                         break;
                     case 0x90: // movb
                         setOperand(1, getOperand(1, false));
+                        break;
+                    case 0x9e: // movab
+                        setOperand(4, getAddr(1));
                         break;
                     case 0xbc: // chmk
                         chmk();
