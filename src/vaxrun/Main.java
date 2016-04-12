@@ -113,7 +113,7 @@ class AOut {
 
 class VAX {
 
-    public final int AP = 12, FP = 13, SP = 14, PC = 15;
+    public static final int AP = 12, FP = 13, SP = 14, PC = 15;
     private final byte[] mem = new byte[0x40000];
     private final int[] r = new int[16];
     private final ByteBuffer buf;
