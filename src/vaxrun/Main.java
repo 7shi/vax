@@ -526,11 +526,24 @@ class VAX {
         throw error("%08x: unknown syscall %02x", r[PC] - 1, syscall);
     }
 
+    public void debug() {
+        System.err.printf("%08x %08x %08x %08x-%08x %08x %08x %08x-%08x %08x %08x %08x-%08x %08x %08x %08x %s\n",
+                r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7],
+                r[8], r[9], r[10], r[11], r[12], r[13], r[14], r[15], dis.disasm1(r[PC]));
+    }
+
     public void run(boolean debug) throws Exception {
+        if (debug) {
+            System.err.print("   r0       r1       r2       r3   -");
+            System.err.print("   r4       r5       r6       r7   -");
+            System.err.print("   r8       r9       r10      r11  -");
+            System.err.print("   ap       fp       sp       pc    disasm");
+            System.err.println();
+        }
         int opcode, s;
         for (;;) {
             if (debug) {
-                System.err.printf("%08x: %s\n", r[PC], dis.disasm1(r[PC]));
+                debug();
             }
             switch (opcode = fetch()) {
                 case 0x82: // subb2
