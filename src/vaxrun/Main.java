@@ -526,10 +526,14 @@ class VAX {
     public int getAddr(int size) throws Exception {
         int pc = r[PC];
         int b = fetch();
-        int t = b >> 4, rn = b & 15, disp;
+        int t = b >> 4, rn = b & 15, disp, ret;
         switch (t) {
             case 6: // (r)
                 return r[rn];
+            case 8: // (r)+
+                ret = r[rn];
+                r[rn] += size;
+                return ret;
             case 0xa: // b(r)
                 disp = fetchSigned(1);
                 return r[rn] + disp;
@@ -560,10 +564,11 @@ class VAX {
                 len = 1;
                 ret = getSigned(reg(rn, len), size);
                 break;
-            case 8:
-                if (rn == 15) {
-                    len = 1 + size;
-                    ret = getSigned(pc, size);
+            case 8: // (r)+
+                len = 1;
+                ret = getSigned(reg(rn, len), size);
+                if (!pre) {
+                    r[rn] += size;
                 }
                 break;
             case 0xa: // b(r)
@@ -593,6 +598,10 @@ class VAX {
                 return;
             case 6: // (r)
                 setSigned(r[rn], size, value);
+                return;
+            case 8: // (r)+
+                setSigned(r[rn], size, value);
+                r[rn] += size;
                 return;
             case 0xa: // b(r)
                 disp = fetchSigned(1);
