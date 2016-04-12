@@ -3,6 +3,7 @@ package vaxrun;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -223,6 +224,25 @@ class VAXDisasm {
         return prefix + x.substring(p) + suffix;
     }
 
+    public void output(PrintStream out, int pc, int len, String asm) {
+        for (int i = 0; i < len; ++i) {
+            if ((i & 7) == 0) {
+                if (i > 0 && i == 8) {
+                    out.println("  " + asm);
+                }
+                out.printf("%08x:", pc + i);
+            }
+            out.printf(" %02x", buf.get(pc + i));
+        }
+        if (len <= 8) {
+            for (int i = len; i < 8; ++i) {
+                out.print("   ");
+            }
+            out.print("  " + asm);
+        }
+        out.println();
+    }
+
     public String getOpr(VAXType t) {
         if (t == VAXType.RELB || t == VAXType.RELW) {
             int rel = fetchSigned(t.size);
@@ -284,6 +304,30 @@ class VAXDisasm {
             sb.append(getOpr(VAXType.table[op.oprs[i]]));
         }
         return sb.toString();
+    }
+
+    public void disasm(PrintStream out, int start, int end) {
+        pc = start;
+        while (pc < end) {
+            int oldpc = pc;
+            String asm = null;
+            if (aout != null) {
+                String o = aout.symO.get(oldpc);
+                if (o != null) {
+                    System.out.printf("[%s]\n", o);
+                }
+                if (aout.symT.containsKey(oldpc)) {
+                    System.out.printf("%s:\n", aout.symT.get(oldpc));
+                    asm = word1();
+                } else if (oldpc == aout.a_entry) {
+                    asm = word1();
+                }
+            }
+            if (asm == null) {
+                asm = disasm1(pc);
+            }
+            output(out, oldpc, pc - oldpc, asm);
+        }
     }
 
     public String word1() {
@@ -396,6 +440,7 @@ class VAX {
         r[PC] = aout.a_entry + 2;
         buf = ByteBuffer.wrap(mem).order(ByteOrder.LITTLE_ENDIAN);
         dis = new VAXDisasm(buf, aout);
+        r[SP] = mem.length - 4;
     }
 
     public int fetch() {
@@ -537,42 +582,44 @@ class VAX {
             System.err.print("   r0       r1       r2       r3   -");
             System.err.print("   r4       r5       r6       r7   -");
             System.err.print("   r8       r9       r10      r11  -");
-            System.err.print("   ap       fp       sp       pc    disasm");
-            System.err.println();
+            System.err.print("   ap       fp       sp       pc    ");
+            System.err.println("disasm");
         }
-        int opcode, s;
-        for (;;) {
-            if (debug) {
-                debug();
-            }
-            switch (opcode = fetch()) {
-                case 0x82: // subb2
-                    s = getOperand(1, false);
-                    setOperand(1, getOperand(1, true) - s);
-                    break;
-                case 0x90: // movb
-                    setOperand(1, getOperand(1, false));
-                    break;
-                case 0xbc: // chmk
-                    chmk();
-                    break;
-                case 0xb0: // movw
-                    setOperand(2, getOperand(2, false));
-                    break;
-                case 0xc2: // subl2
-                    s = getOperand(4, false);
-                    setOperand(4, getOperand(4, true) - s);
-                    break;
-                case 0xd0: // movl
-                    setOperand(4, getOperand(4, false));
-                    break;
-                default: {
-                    VAXOp op = VAXOp.table[opcode];
-                    String mne = op == null ? "???" : op.mne;
-                    throw error("%08x: unknown opcode %02x %s", r[PC] - 1, opcode, mne);
+        int pc = r[PC], opcode, s;
+        try {
+            for (;;) {
+                if (debug) {
+                    debug();
                 }
-
+                pc = r[PC];
+                switch (opcode = fetch()) {
+                    case 0x82: // subb2
+                        s = getOperand(1, false);
+                        setOperand(1, getOperand(1, true) - s);
+                        break;
+                    case 0x90: // movb
+                        setOperand(1, getOperand(1, false));
+                        break;
+                    case 0xbc: // chmk
+                        chmk();
+                        break;
+                    case 0xb0: // movw
+                        setOperand(2, getOperand(2, false));
+                        break;
+                    case 0xc2: // subl2
+                        s = getOperand(4, false);
+                        setOperand(4, getOperand(4, true) - s);
+                        break;
+                    case 0xd0: // movl
+                        setOperand(4, getOperand(4, false));
+                        break;
+                    default:
+                        throw error("%08x: unknown opcode %02x", r[PC] - 1, opcode);
+                }
             }
+        } catch (Exception e) {
+            dis.disasm(System.err, pc, pc + 1);
+            throw e;
         }
     }
 }
