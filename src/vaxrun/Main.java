@@ -273,31 +273,52 @@ class VAX {
         return new Exception(String.format(format, args));
     }
 
-    public int getOperand(int size) throws Exception {
-        int b = fetch();
-        switch (b) {
-            case 0x8f:
-                return fetchSigned(size);
-        }
-        int t = b >> 4, n = b & 15, disp;
+    public int reg(int n, int offset) {
+        return n == 15 ? r[n] + offset : r[n];
+    }
+
+    public int getOperand(int size, boolean pre) throws Exception {
+        int pc = r[PC];
+        int b = Byte.toUnsignedInt(mem[pc++]);
+        int t = b >> 4, n = b & 15, len = 0, ret = 0;
         switch (t) {
             case 0:
             case 1:
             case 2:
             case 3:
-                return b;
+                len = 1;
+                ret = b;
+                break;
             case 5: // r
-                return r[n];
+                len = 1;
+                ret = reg(n, len);
+                break;
             case 6: // (r)
-                return getSigned(r[n], size);
+                len = 1;
+                ret = getSigned(reg(n, len), size);
+                break;
+            case 8:
+                if (n == 15) {
+                    len = 1 + size;
+                    ret = getSigned(pc, size);
+                }
+                break;
             case 0xa: // b(r)
-                disp = fetchSigned(1);
-                return getSigned(r[n] + disp, size);
+                len = 2;
+                ret = getSigned(reg(n, len) + mem[pc], size);
+                break;
             case 0xe: // l(r)
-                disp = fetchSigned(4);
-                return getSigned(r[n] + disp, size);
+                len = 5;
+                ret = getSigned(reg(n, len) + buf.getInt(pc), size);
+                break;
         }
-        throw error("%08x: unknown operand %02x", r[PC] - 1, b);
+        if (len == 0) {
+            throw error("%08x: unknown operand %02x", r[PC], b);
+        }
+        if (!pre) {
+            r[PC] += len;
+        }
+        return ret;
     }
 
     public void setOperand(int size, int value) throws Exception {
@@ -336,38 +357,28 @@ class VAX {
     }
 
     public void run() throws Exception {
-        int opcode;
+        int opcode, s;
         for (;;) {
             switch (opcode = fetch()) {
                 case 0x82: // subb2
-                {
-                    int s = getOperand(1);
-                    int pc = r[PC];
-                    int d = getOperand(1);
-                    r[PC] = pc;
-                    setOperand(1, d - s);
+                    s = getOperand(1, false);
+                    setOperand(1, getOperand(1, true) - s);
                     break;
-                }
                 case 0x90: // movb
-                    setOperand(1, getOperand(1));
+                    setOperand(1, getOperand(1, false));
                     break;
                 case 0xbc: // chmk
                     chmk();
                     break;
                 case 0xb0: // movw
-                    setOperand(2, getOperand(2));
+                    setOperand(2, getOperand(2, false));
                     break;
                 case 0xc2: // subl2
-                {
-                    int s = getOperand(4);
-                    int pc = r[PC];
-                    int d = getOperand(4);
-                    r[PC] = pc;
-                    setOperand(4, d - s);
+                    s = getOperand(4, false);
+                    setOperand(4, getOperand(4, true) - s);
                     break;
-                }
                 case 0xd0: // movl
-                    setOperand(4, getOperand(4));
+                    setOperand(4, getOperand(4, false));
                     break;
                 default: {
                     VAXOp op = VAXOp.table[opcode];
