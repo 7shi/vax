@@ -281,6 +281,11 @@ class VAX {
         }
         int t = b >> 4, n = b & 15, disp;
         switch (t) {
+            case 0:
+            case 1:
+            case 2:
+            case 3:
+                return b;
             case 5: // r
                 return r[n];
             case 6: // (r)
@@ -334,6 +339,15 @@ class VAX {
         int opcode;
         for (;;) {
             switch (opcode = fetch()) {
+                case 0x82: // subb2
+                {
+                    int s = getOperand(1);
+                    int pc = r[PC];
+                    int d = getOperand(1);
+                    r[PC] = pc;
+                    setOperand(1, d - s);
+                    break;
+                }
                 case 0x90: // movb
                     setOperand(1, getOperand(1));
                     break;
@@ -343,6 +357,15 @@ class VAX {
                 case 0xb0: // movw
                     setOperand(2, getOperand(2));
                     break;
+                case 0xc2: // subl2
+                {
+                    int s = getOperand(4);
+                    int pc = r[PC];
+                    int d = getOperand(4);
+                    r[PC] = pc;
+                    setOperand(4, d - s);
+                    break;
+                }
                 case 0xd0: // movl
                     setOperand(4, getOperand(4));
                     break;
