@@ -177,8 +177,8 @@ class VAXDisasm {
     };
 
     private final ByteBuffer buf;
+    private final AOut aout;
     private int pc;
-    private AOut aout;
 
     public VAXDisasm(ByteBuffer buf, AOut aout) {
         this.buf = buf;
