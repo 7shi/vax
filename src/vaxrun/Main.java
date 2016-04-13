@@ -434,9 +434,11 @@ class VAX {
     private final int[] r = new int[16];
     private boolean n, z, v, c;
     private final ByteBuffer buf;
+    private final AOut aout;
     private final VAXDisasm dis;
 
     public VAX(AOut aout, String[] args) {
+        this.aout = aout;
         System.arraycopy(aout.text, 0, mem, 0, aout.a_text);
         int dstart = (aout.a_text + 0x1ff) & ~0x1ff;
         System.arraycopy(aout.data, 0, mem, dstart, aout.a_data);
@@ -773,30 +775,47 @@ class VAX {
             throw e;
         }
     }
+
+    public void disasm(PrintStream out) {
+        dis.disasm(out, 0, aout.a_text);
+    }
 }
 
 public class Main {
 
     public static void main(String[] args) {
-        boolean verbose = false;
+        boolean disasm = false, verbose = false;
         String aout = null;
         String[] args2 = null;
+        OUTER:
         for (int i = 0; i < args.length; ++i) {
             String arg = args[i];
-            if (arg.equals("-v")) {
-                verbose = true;
-            } else {
-                aout = arg;
-                args2 = Arrays.copyOfRange(args, i, args.length);
-                break;
+            switch (arg) {
+                case "-d":
+                    disasm = true;
+                    break;
+                case "-v":
+                    verbose = true;
+                    break;
+                default:
+                    aout = arg;
+                    args2 = Arrays.copyOfRange(args, i, args.length);
+                    break OUTER;
             }
         }
         if (aout == null) {
-            System.err.println("usage: vaxrun [-v] a.out [...]");
+            System.err.println("usage: vaxrun [-d|-v] a.out [...]");
+            System.err.println("    -d: disasm");
+            System.err.println("    -v: verbose (debug mode)");
             System.exit(1);
         }
         try {
-            new VAX(new AOut(aout), args2).run(verbose);
+            VAX vax = new VAX(new AOut(aout), args2);
+            if (disasm) {
+                vax.disasm(System.out);
+            } else {
+                vax.run(verbose);
+            }
         } catch (Exception ex) {
             ex.printStackTrace(System.err);
             System.exit(1);
