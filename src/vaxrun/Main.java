@@ -524,32 +524,11 @@ class VAX {
         return n == 15 ? r[n] + offset : r[n];
     }
 
-    public int getAddr(int size) throws Exception {
-        int pc = r[PC];
-        int b = fetch();
-        int t = b >> 4, rn = b & 15, disp, ret;
-        switch (t) {
-            case 6: // (r)
-                return r[rn];
-            case 8: // (r)+
-                ret = r[rn];
-                r[rn] += size;
-                return ret;
-            case 0xa: // b(r)
-                disp = fetchSigned(1);
-                return r[rn] + disp;
-            case 0xe: // l(r)
-                disp = fetchSigned(4);
-                return r[rn] + disp;
-        }
-        throw error("%08x: not addr %02x", pc, b);
-    }
-
     public int peekOperand(int size) throws Exception {
         int pc = r[PC];
         int b = Byte.toUnsignedInt(mem[pc++]);
-        int t = b >> 4, rn = b & 15;
-        switch (t) {
+        int rn = b & 15;
+        switch (b >> 4) {
             case 0:
             case 1:
             case 2:
@@ -570,36 +549,46 @@ class VAX {
     }
 
     public int getOperand(int size) throws Exception {
-        int b = fetch();
-        int t = b >> 4, rn = b & 15, disp, ret;
-        switch (t) {
+        int b = Byte.toUnsignedInt(mem[r[PC]]);
+        switch (b >> 4) {
             case 0:
             case 1:
             case 2:
             case 3:
+                ++r[PC];
                 return b;
             case 5: // r
-                return r[rn];
+                ++r[PC];
+                return r[b & 15];
+        }
+        return getSigned(getAddr(size), size);
+    }
+
+    public int getAddr(int size) throws Exception {
+        int pc = r[PC];
+        int b = fetch();
+        int rn = b & 15, disp, ret;
+        switch (b >> 4) {
             case 6: // (r)
-                return getSigned(r[rn], size);
+                return r[rn];
             case 8: // (r)+
-                ret = getSigned(r[rn], size);
+                ret = r[rn];
                 r[rn] += size;
                 return ret;
             case 0xa: // b(r)
                 disp = fetchSigned(1);
-                return getSigned(r[rn] + disp, size);
+                return r[rn] + disp;
             case 0xe: // l(r)
                 disp = fetchSigned(4);
-                return getSigned(r[rn] + disp, size);
+                return r[rn] + disp;
         }
-        throw error("%08x: unknown operand %02x", r[PC], b);
+        throw error("%08x: not addr %02x", pc, b);
     }
 
     public void setOperand(int size, int value) throws Exception {
         int b = fetch();
-        int t = b >> 4, rn = b & 15, disp;
-        switch (t) {
+        int rn = b & 15, disp;
+        switch (b >> 4) {
             case 5: // r
                 r[rn] = value;
                 return;
