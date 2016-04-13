@@ -447,13 +447,13 @@ class VAX {
     }
 
     private void setArgs(String[] args) {
-        int len = 0;
+        int s = mem.length;
         byte[][] bargs = new byte[args.length][];
         for (int i = 0; i < args.length; ++i) {
             bargs[i] = args[i].getBytes(StandardCharsets.US_ASCII);
-            len += bargs[i].length + 1;
+            s -= bargs[i].length + 1;
         }
-        int s = mem.length - ((len + 1) & ~1);
+        s &= ~3;
         buf.putLong(s - 8, 0);
         int argv = s - (args.length + 2) * 4;
         r[SP] = argv - 4;
