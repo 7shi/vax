@@ -639,7 +639,7 @@ class VAX {
             System.err.print("   r8       r9       r10      r11  -");
             System.err.println("   ap       fp       sp    flag    pc    disasm");
         }
-        int pc = r[PC], opcode, s;
+        int pc = r[PC], opcode, s1, s2, d;
         try {
             for (;;) {
                 if (debug) {
@@ -648,14 +648,14 @@ class VAX {
                 pc = r[PC];
                 switch (opcode = fetch()) {
                     case 0x12: // bneq
-                        s = fetchSigned(1);
+                        s1 = fetchSigned(1);
                         if (!z) {
-                            r[PC] += s;
+                            r[PC] += s1;
                         }
                         break;
                     case 0x82: // subb2
-                        s = getOperand(1);
-                        setOperand(1, peekOperand(1) - s);
+                        s1 = getOperand(1);
+                        setOperand(1, peekOperand(1) - s1);
                         break;
                     case 0x90: // movb
                         setOperand(1, getOperand(1));
@@ -670,15 +670,24 @@ class VAX {
                         setOperand(2, getOperand(2));
                         break;
                     case 0xc2: // subl2
-                        s = getOperand(4);
-                        setOperand(4, peekOperand(4) - s);
+                        s1 = getOperand(4);
+                        setOperand(4, peekOperand(4) - s1);
                         break;
                     case 0xd0: // movl
                         setOperand(4, getOperand(4));
                         break;
+                    case 0xd1: // cmpl
+                        s1 = getOperand(4);
+                        s2 = getOperand(4);
+                        d = s1 - s2;
+                        setNZVC(d < 0, d == 0,
+                                (s1 < 0) != (s2 < 0) && (s1 < 0) != (d < 0),
+                                Integer.compareUnsigned(s1, d) < 0
+                        );
+                        break;
                     case 0xd5: // tstl
-                        s = getOperand(4);
-                        setNZVC(s < 0, s == 0, v, c); // CHECK
+                        s1 = getOperand(4);
+                        setNZVC(s1 < 0, s1 == 0, v, c); // CHECK
                         break;
                     default:
                         throw error("%08x: unknown opcode %02x", r[PC] - 1, opcode);
