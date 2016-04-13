@@ -764,7 +764,7 @@ class VAX {
                         break;
                     case 0xd5: // tstl
                         s1 = getOperand(4);
-                        setNZVC(s1 < 0, s1 == 0, v, c); // CHECK
+                        setNZVC(s1 < 0, s1 == 0, false, false);
                         break;
                     default:
                         throw error("%08x: unknown opcode %02x", r[PC] - 1, opcode);
