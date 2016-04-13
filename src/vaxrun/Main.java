@@ -545,49 +545,55 @@ class VAX {
         throw error("%08x: not addr %02x", pc, b);
     }
 
-    public int getOperand(int size, boolean pre) throws Exception {
+    public int peekOperand(int size) throws Exception {
         int pc = r[PC];
         int b = Byte.toUnsignedInt(mem[pc++]);
-        int t = b >> 4, rn = b & 15, len = 0, ret = 0;
+        int t = b >> 4, rn = b & 15;
         switch (t) {
             case 0:
             case 1:
             case 2:
             case 3:
-                len = 1;
-                ret = b;
-                break;
+                return b;
             case 5: // r
-                len = 1;
-                ret = reg(rn, len);
-                break;
+                return reg(rn, 1);
             case 6: // (r)
-                len = 1;
-                ret = getSigned(reg(rn, len), size);
-                break;
+                return getSigned(reg(rn, 1), size);
             case 8: // (r)+
-                len = 1;
-                ret = getSigned(reg(rn, len), size);
-                if (!pre) {
-                    r[rn] += size;
-                }
-                break;
+                return getSigned(reg(rn, 1), size);
             case 0xa: // b(r)
-                len = 2;
-                ret = getSigned(reg(rn, len) + mem[pc], size);
-                break;
+                return getSigned(reg(rn, 2) + mem[pc], size);
             case 0xe: // l(r)
-                len = 5;
-                ret = getSigned(reg(rn, len) + buf.getInt(pc), size);
-                break;
+                return getSigned(reg(rn, 5) + buf.getInt(pc), size);
         }
-        if (len == 0) {
-            throw error("%08x: unknown operand %02x", r[PC], b);
+        throw error("%08x: unknown operand %02x", r[PC], b);
+    }
+
+    public int getOperand(int size) throws Exception {
+        int b = fetch();
+        int t = b >> 4, rn = b & 15, disp, ret;
+        switch (t) {
+            case 0:
+            case 1:
+            case 2:
+            case 3:
+                return b;
+            case 5: // r
+                return r[rn];
+            case 6: // (r)
+                return getSigned(r[rn], size);
+            case 8: // (r)+
+                ret = getSigned(r[rn], size);
+                r[rn] += size;
+                return ret;
+            case 0xa: // b(r)
+                disp = fetchSigned(1);
+                return getSigned(r[rn] + disp, size);
+            case 0xe: // l(r)
+                disp = fetchSigned(4);
+                return getSigned(r[rn] + disp, size);
         }
-        if (!pre) {
-            r[PC] += len;
-        }
-        return ret;
+        throw error("%08x: unknown operand %02x", r[PC], b);
     }
 
     public void setOperand(int size, int value) throws Exception {
@@ -659,11 +665,11 @@ class VAX {
                         }
                         break;
                     case 0x82: // subb2
-                        s = getOperand(1, false);
-                        setOperand(1, getOperand(1, true) - s);
+                        s = getOperand(1);
+                        setOperand(1, peekOperand(1) - s);
                         break;
                     case 0x90: // movb
-                        setOperand(1, getOperand(1, false));
+                        setOperand(1, getOperand(1));
                         break;
                     case 0x9e: // movab
                         setOperand(4, getAddr(1));
@@ -672,17 +678,17 @@ class VAX {
                         chmk();
                         break;
                     case 0xb0: // movw
-                        setOperand(2, getOperand(2, false));
+                        setOperand(2, getOperand(2));
                         break;
                     case 0xc2: // subl2
-                        s = getOperand(4, false);
-                        setOperand(4, getOperand(4, true) - s);
+                        s = getOperand(4);
+                        setOperand(4, peekOperand(4) - s);
                         break;
                     case 0xd0: // movl
-                        setOperand(4, getOperand(4, false));
+                        setOperand(4, getOperand(4));
                         break;
                     case 0xd5: // tstl
-                        s = getOperand(4, false);
+                        s = getOperand(4);
                         setNZVC(s < 0, s == 0, v, c); // CHECK
                         break;
                     default:
