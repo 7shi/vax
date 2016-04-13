@@ -713,7 +713,7 @@ public class Main {
             }
         }
         if (aout == null) {
-            System.err.println("usage: vaxrun [-d] a.out");
+            System.err.println("usage: vaxrun [-d] a.out [...]");
             System.exit(1);
         }
         try {
