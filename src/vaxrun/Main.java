@@ -641,8 +641,8 @@ class VAX {
                 r[15], dis.disasm1(r[PC]));
     }
 
-    public void run(boolean debug) throws Exception {
-        if (debug) {
+    public void run(boolean verbose) throws Exception {
+        if (verbose) {
             System.err.print("   r0       r1       r2       r3   -");
             System.err.print("   r4       r5       r6       r7   -");
             System.err.print("   r8       r9       r10      r11  -");
@@ -651,7 +651,7 @@ class VAX {
         int pc = r[PC], opcode, s1, s2, d;
         try {
             for (;;) {
-                if (debug) {
+                if (verbose) {
                     debug();
                 }
                 pc = r[PC];
@@ -778,13 +778,13 @@ class VAX {
 public class Main {
 
     public static void main(String[] args) {
-        boolean debug = false;
+        boolean verbose = false;
         String aout = null;
         String[] args2 = null;
         for (int i = 0; i < args.length; ++i) {
             String arg = args[i];
-            if (arg.equals("-d")) {
-                debug = true;
+            if (arg.equals("-v")) {
+                verbose = true;
             } else {
                 aout = arg;
                 args2 = Arrays.copyOfRange(args, i, args.length);
@@ -792,11 +792,11 @@ public class Main {
             }
         }
         if (aout == null) {
-            System.err.println("usage: vaxrun [-d] a.out [...]");
+            System.err.println("usage: vaxrun [-v] a.out [...]");
             System.exit(1);
         }
         try {
-            new VAX(new AOut(aout), args2).run(debug);
+            new VAX(new AOut(aout), args2).run(verbose);
         } catch (Exception ex) {
             ex.printStackTrace(System.err);
             System.exit(1);
