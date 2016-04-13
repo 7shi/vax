@@ -542,6 +542,8 @@ class VAX {
                 return getSigned(reg(rn, 1), size);
             case 0xa: // b(r)
                 return getSigned(reg(rn, 2) + mem[pc], size);
+            case 0xb: // *b(r)
+                return getSigned(getSigned(reg(rn, 2) + mem[pc], 4), size);
             case 0xe: // l(r)
                 return getSigned(reg(rn, 5) + buf.getInt(pc), size);
         }
@@ -578,6 +580,9 @@ class VAX {
             case 0xa: // b(r)
                 disp = fetchSigned(1);
                 return r[rn] + disp;
+            case 0xb: // *b(r)
+                disp = fetchSigned(1);
+                return getSigned(r[rn] + disp, 4);
             case 0xe: // l(r)
                 disp = fetchSigned(4);
                 return r[rn] + disp;
@@ -602,6 +607,10 @@ class VAX {
             case 0xa: // b(r)
                 disp = fetchSigned(1);
                 setSigned(r[rn] + disp, size, value);
+                return;
+            case 0xb: // *b(r)
+                disp = fetchSigned(1);
+                setSigned(getSigned(r[rn] + disp, 4), size, value);
                 return;
             case 0xe: // l(r)
                 disp = fetchSigned(4);
@@ -647,9 +656,75 @@ class VAX {
                 }
                 pc = r[PC];
                 switch (opcode = fetch()) {
-                    case 0x12: // bneq
+                    case 0x12: // bneq / bnequ
                         s1 = fetchSigned(1);
                         if (!z) {
+                            r[PC] += s1;
+                        }
+                        break;
+                    case 0x13: // beql / beqlu
+                        s1 = fetchSigned(1);
+                        if (z) {
+                            r[PC] += s1;
+                        }
+                        break;
+                    case 0x14: // bgtr
+                        s1 = fetchSigned(1);
+                        if (!(n || z)) {
+                            r[PC] += s1;
+                        }
+                        break;
+                    case 0x15: // bleq
+                        s1 = fetchSigned(1);
+                        if (n || z) {
+                            r[PC] += s1;
+                        }
+                        break;
+                    case 0x18: // bgeq
+                        s1 = fetchSigned(1);
+                        if (!n) {
+                            r[PC] += s1;
+                        }
+                        break;
+                    case 0x19: // blss
+                        s1 = fetchSigned(1);
+                        if (n) {
+                            r[PC] += s1;
+                        }
+                        break;
+                    case 0x1a: // bgtru
+                        s1 = fetchSigned(1);
+                        if (!(c || z)) {
+                            r[PC] += s1;
+                        }
+                        break;
+                    case 0x1b: // blequ
+                        s1 = fetchSigned(1);
+                        if (c || z) {
+                            r[PC] += s1;
+                        }
+                        break;
+                    case 0x1c: // bvc
+                        s1 = fetchSigned(1);
+                        if (!v) {
+                            r[PC] += s1;
+                        }
+                        break;
+                    case 0x1d: // bvs
+                        s1 = fetchSigned(1);
+                        if (v) {
+                            r[PC] += s1;
+                        }
+                        break;
+                    case 0x1e: // bgequ / bcc
+                        s1 = fetchSigned(1);
+                        if (!c) {
+                            r[PC] += s1;
+                        }
+                        break;
+                    case 0x1f: // blssu / bcs
+                        s1 = fetchSigned(1);
+                        if (c) {
                             r[PC] += s1;
                         }
                         break;
