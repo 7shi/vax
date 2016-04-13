@@ -648,7 +648,7 @@ class VAX {
             System.err.print("   r0       r1       r2       r3   -");
             System.err.print("   r4       r5       r6       r7   -");
             System.err.print("   r8       r9       r10      r11  -");
-            System.err.println("   ap       fp       sp    flag    pc    disasm");
+            System.err.println(" r12(ap)  r13(fp)  r14(sp) flag  r15(pc) disasm");
         }
         int pc = r[PC], opcode, s1, s2, d;
         try {
