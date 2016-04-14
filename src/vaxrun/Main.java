@@ -159,7 +159,7 @@ class Symbol {
         type = buf.get(p + 8);
         other = buf.get(p + 9);
         desc = buf.getShort(p + 10);
-        value = buf.getInt(p + 12);
+        value = buf.getInt(p + 12) & 0x7fffffff;
         tchar = type < 10 ? "uUaAtTdDbB".charAt(type) : '?';
     }
 
@@ -178,11 +178,14 @@ class VAXDisasm {
 
     private final ByteBuffer buf;
     private final AOut aout;
-    private int pc;
+    private int pc, offset;
 
     public VAXDisasm(ByteBuffer buf, AOut aout) {
         this.buf = buf;
         this.aout = aout;
+        if (aout.a_entry < 0) {
+            offset = 0x80000000;
+        }
     }
 
     public int fetch() {
@@ -231,7 +234,7 @@ class VAXDisasm {
                 if (i > 0 && i == 8) {
                     out.println("  " + asm);
                 }
-                out.printf("%08x:", pc + i);
+                out.printf("%08x:", offset + pc + i);
             }
             out.printf(" %02x", buf.get(pc + i));
         }
