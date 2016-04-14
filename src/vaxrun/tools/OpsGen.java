@@ -1,5 +1,5 @@
 // This file is licensed under the CC0.
-package vax.tools;
+package vaxrun.tools;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
