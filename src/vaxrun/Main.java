@@ -746,6 +746,7 @@ class VAX {
                 }
                 break;
             case 0x82: // subb2
+            case 0xa2: // subw2
             case 0xc2: // subl2
                 s1 = getOperand(size);
                 s2 = peekOperand(size);
@@ -762,9 +763,13 @@ class VAX {
                 setNZVC(d < 0, d == 0, false, c);
                 break;
             case 0x9e: // movab
+            case 0x3e: // movaw
+            case 0xde: // moval
                 setOperand(4, d = getAddr(size));
                 setNZVC(d < 0, d == 0, false, c);
                 break;
+            case 0x91: // cmpb
+            case 0xb1: // cmpw
             case 0xd1: // cmpl
                 s1 = getOperand(size);
                 s2 = getOperand(size);
@@ -774,6 +779,8 @@ class VAX {
                         Integer.compareUnsigned(s1, d) < 0
                 );
                 break;
+            case 0x95: // tstb
+            case 0xb5: // tstw
             case 0xd5: // tstl
                 s1 = getOperand(size);
                 setNZVC(s1 < 0, s1 == 0, false, false);
