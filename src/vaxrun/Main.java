@@ -669,8 +669,10 @@ class VAX {
         if (verbose) {
             debug();
         }
-        int opcode, s1, s2, d;
-        switch (opcode = fetch()) {
+        int opcode = fetch();
+        int size = 1 << ((opcode & 0x7f) >> 5);
+        int s1, s2, d;
+        switch (opcode) {
             case 0x12: // bneq / bnequ
                 s1 = fetchSigned(1);
                 if (!z) {
@@ -744,42 +746,28 @@ class VAX {
                 }
                 break;
             case 0x82: // subb2
-                s1 = getOperand(1);
-                s2 = peekOperand(1);
-                setOperand(1, d = s2 - s1);
-                setNZVC(d < 0, d == 0,
-                        (s1 < 0) != (s2 < 0) && (s2 < 0) != (d < 0),
-                        Integer.compareUnsigned(s2, d) < 0
-                );
-                break;
             case 0xc2: // subl2
-                s1 = getOperand(4);
-                s2 = peekOperand(4);
-                setOperand(4, d = s2 - s1);
+                s1 = getOperand(size);
+                s2 = peekOperand(size);
+                setOperand(size, d = s2 - s1);
                 setNZVC(d < 0, d == 0,
                         (s1 < 0) != (s2 < 0) && (s2 < 0) != (d < 0),
                         Integer.compareUnsigned(s2, d) < 0
                 );
                 break;
             case 0x90: // movb
-                setOperand(1, d = getOperand(1));
-                setNZVC(d < 0, d == 0, false, c);
-                break;
             case 0xb0: // movw
-                setOperand(2, d = getOperand(2));
-                setNZVC(d < 0, d == 0, false, c);
-                break;
             case 0xd0: // movl
-                setOperand(4, d = getOperand(4));
+                setOperand(size, d = getOperand(size));
                 setNZVC(d < 0, d == 0, false, c);
                 break;
             case 0x9e: // movab
-                setOperand(4, d = getAddr(1));
+                setOperand(4, d = getAddr(size));
                 setNZVC(d < 0, d == 0, false, c);
                 break;
             case 0xd1: // cmpl
-                s1 = getOperand(4);
-                s2 = getOperand(4);
+                s1 = getOperand(size);
+                s2 = getOperand(size);
                 d = s1 - s2;
                 setNZVC(d < 0, d == 0,
                         (s1 < 0) != (s2 < 0) && (s1 < 0) != (d < 0),
@@ -787,7 +775,7 @@ class VAX {
                 );
                 break;
             case 0xd5: // tstl
-                s1 = getOperand(4);
+                s1 = getOperand(size);
                 setNZVC(s1 < 0, s1 == 0, false, false);
                 break;
             case 0xbc: // chmk
