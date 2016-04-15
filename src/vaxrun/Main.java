@@ -653,129 +653,134 @@ class VAX {
             System.err.print("   r8       r9       r10      r11  -");
             System.err.println(" r12(ap)  r13(fp)  r14(sp) flag  r15(pc) disasm");
         }
-        int pc = r[PC], opcode, s1, s2, d;
+        int pc = r[PC];
         try {
             for (;;) {
-                if (verbose) {
-                    debug();
-                }
                 pc = r[PC];
-                switch (opcode = fetch()) {
-                    case 0x12: // bneq / bnequ
-                        s1 = fetchSigned(1);
-                        if (!z) {
-                            r[PC] += s1;
-                        }
-                        break;
-                    case 0x13: // beql / beqlu
-                        s1 = fetchSigned(1);
-                        if (z) {
-                            r[PC] += s1;
-                        }
-                        break;
-                    case 0x14: // bgtr
-                        s1 = fetchSigned(1);
-                        if (!(n || z)) {
-                            r[PC] += s1;
-                        }
-                        break;
-                    case 0x15: // bleq
-                        s1 = fetchSigned(1);
-                        if (n || z) {
-                            r[PC] += s1;
-                        }
-                        break;
-                    case 0x18: // bgeq
-                        s1 = fetchSigned(1);
-                        if (!n) {
-                            r[PC] += s1;
-                        }
-                        break;
-                    case 0x19: // blss
-                        s1 = fetchSigned(1);
-                        if (n) {
-                            r[PC] += s1;
-                        }
-                        break;
-                    case 0x1a: // bgtru
-                        s1 = fetchSigned(1);
-                        if (!(c || z)) {
-                            r[PC] += s1;
-                        }
-                        break;
-                    case 0x1b: // blequ
-                        s1 = fetchSigned(1);
-                        if (c || z) {
-                            r[PC] += s1;
-                        }
-                        break;
-                    case 0x1c: // bvc
-                        s1 = fetchSigned(1);
-                        if (!v) {
-                            r[PC] += s1;
-                        }
-                        break;
-                    case 0x1d: // bvs
-                        s1 = fetchSigned(1);
-                        if (v) {
-                            r[PC] += s1;
-                        }
-                        break;
-                    case 0x1e: // bgequ / bcc
-                        s1 = fetchSigned(1);
-                        if (!c) {
-                            r[PC] += s1;
-                        }
-                        break;
-                    case 0x1f: // blssu / bcs
-                        s1 = fetchSigned(1);
-                        if (c) {
-                            r[PC] += s1;
-                        }
-                        break;
-                    case 0x82: // subb2
-                        s1 = getOperand(1);
-                        setOperand(1, peekOperand(1) - s1);
-                        break;
-                    case 0x90: // movb
-                        setOperand(1, getOperand(1));
-                        break;
-                    case 0x9e: // movab
-                        setOperand(4, getAddr(1));
-                        break;
-                    case 0xbc: // chmk
-                        chmk();
-                        break;
-                    case 0xb0: // movw
-                        setOperand(2, getOperand(2));
-                        break;
-                    case 0xc2: // subl2
-                        s1 = getOperand(4);
-                        setOperand(4, peekOperand(4) - s1);
-                        break;
-                    case 0xd0: // movl
-                        setOperand(4, getOperand(4));
-                        break;
-                    case 0xd1: // cmpl
-                        s1 = getOperand(4);
-                        s2 = getOperand(4);
-                        d = s1 - s2;
-                        setNZVC(d < 0, d == 0,
-                                (s1 < 0) != (s2 < 0) && (s1 < 0) != (d < 0),
-                                Integer.compareUnsigned(s1, d) < 0
-                        );
-                        break;
-                    case 0xd5: // tstl
-                        s1 = getOperand(4);
-                        setNZVC(s1 < 0, s1 == 0, false, false);
-                        break;
-                    default:
-                        throw error("%08x: unknown opcode %02x", r[PC] - 1, opcode);
-                }
+                step(verbose);
             }
         } catch (Exception e) {
             dis.disasm(System.err, pc, pc + 1);
             throw e;
+        }
+    }
+
+    public void step(boolean verbose) throws Exception {
+        if (verbose) {
+            debug();
+        }
+        int opcode, s1, s2, d;
+        switch (opcode = fetch()) {
+            case 0x12: // bneq / bnequ
+                s1 = fetchSigned(1);
+                if (!z) {
+                    r[PC] += s1;
+                }
+                break;
+            case 0x13: // beql / beqlu
+                s1 = fetchSigned(1);
+                if (z) {
+                    r[PC] += s1;
+                }
+                break;
+            case 0x14: // bgtr
+                s1 = fetchSigned(1);
+                if (!(n || z)) {
+                    r[PC] += s1;
+                }
+                break;
+            case 0x15: // bleq
+                s1 = fetchSigned(1);
+                if (n || z) {
+                    r[PC] += s1;
+                }
+                break;
+            case 0x18: // bgeq
+                s1 = fetchSigned(1);
+                if (!n) {
+                    r[PC] += s1;
+                }
+                break;
+            case 0x19: // blss
+                s1 = fetchSigned(1);
+                if (n) {
+                    r[PC] += s1;
+                }
+                break;
+            case 0x1a: // bgtru
+                s1 = fetchSigned(1);
+                if (!(c || z)) {
+                    r[PC] += s1;
+                }
+                break;
+            case 0x1b: // blequ
+                s1 = fetchSigned(1);
+                if (c || z) {
+                    r[PC] += s1;
+                }
+                break;
+            case 0x1c: // bvc
+                s1 = fetchSigned(1);
+                if (!v) {
+                    r[PC] += s1;
+                }
+                break;
+            case 0x1d: // bvs
+                s1 = fetchSigned(1);
+                if (v) {
+                    r[PC] += s1;
+                }
+                break;
+            case 0x1e: // bgequ / bcc
+                s1 = fetchSigned(1);
+                if (!c) {
+                    r[PC] += s1;
+                }
+                break;
+            case 0x1f: // blssu / bcs
+                s1 = fetchSigned(1);
+                if (c) {
+                    r[PC] += s1;
+                }
+                break;
+            case 0x82: // subb2
+                s1 = getOperand(1);
+                setOperand(1, peekOperand(1) - s1);
+                break;
+            case 0x90: // movb
+                setOperand(1, getOperand(1));
+                break;
+            case 0x9e: // movab
+                setOperand(4, getAddr(1));
+                break;
+            case 0xbc: // chmk
+                chmk();
+                break;
+            case 0xb0: // movw
+                setOperand(2, getOperand(2));
+                break;
+            case 0xc2: // subl2
+                s1 = getOperand(4);
+                setOperand(4, peekOperand(4) - s1);
+                break;
+            case 0xd0: // movl
+                setOperand(4, getOperand(4));
+                break;
+            case 0xd1: // cmpl
+                s1 = getOperand(4);
+                s2 = getOperand(4);
+                d = s1 - s2;
+                setNZVC(d < 0, d == 0,
+                        (s1 < 0) != (s2 < 0) && (s1 < 0) != (d < 0),
+                        Integer.compareUnsigned(s1, d) < 0
+                );
+                break;
+            case 0xd5: // tstl
+                s1 = getOperand(4);
+                setNZVC(s1 < 0, s1 == 0, false, false);
+                break;
+            default:
+                throw error("%08x: unknown opcode %02x", r[PC] - 1, opcode);
         }
     }
 
