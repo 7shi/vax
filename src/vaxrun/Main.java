@@ -472,7 +472,7 @@ class VAX {
         }
     }
 
-    private void setNZVC(boolean n, boolean z, boolean v, boolean c) {
+    public void setNZVC(boolean n, boolean z, boolean v, boolean c) {
         this.n = n;
         this.z = z;
         this.v = v;
