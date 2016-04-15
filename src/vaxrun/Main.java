@@ -752,21 +752,6 @@ class VAX {
                         Integer.compareUnsigned(s2, d) < 0
                 );
                 break;
-            case 0x90: // movb
-                setOperand(1, d = getOperand(1));
-                setNZVC(d < 0, d == 0, false, c);
-                break;
-            case 0x9e: // movab
-                setOperand(4, d = getAddr(1));
-                setNZVC(d < 0, d == 0, false, c);
-                break;
-            case 0xbc: // chmk
-                chmk();
-                break;
-            case 0xb0: // movw
-                setOperand(2, d = getOperand(2));
-                setNZVC(d < 0, d == 0, false, c);
-                break;
             case 0xc2: // subl2
                 s1 = getOperand(4);
                 s2 = peekOperand(4);
@@ -776,8 +761,20 @@ class VAX {
                         Integer.compareUnsigned(s2, d) < 0
                 );
                 break;
+            case 0x90: // movb
+                setOperand(1, d = getOperand(1));
+                setNZVC(d < 0, d == 0, false, c);
+                break;
+            case 0xb0: // movw
+                setOperand(2, d = getOperand(2));
+                setNZVC(d < 0, d == 0, false, c);
+                break;
             case 0xd0: // movl
                 setOperand(4, d = getOperand(4));
+                setNZVC(d < 0, d == 0, false, c);
+                break;
+            case 0x9e: // movab
+                setOperand(4, d = getAddr(1));
                 setNZVC(d < 0, d == 0, false, c);
                 break;
             case 0xd1: // cmpl
@@ -792,6 +789,9 @@ class VAX {
             case 0xd5: // tstl
                 s1 = getOperand(4);
                 setNZVC(s1 < 0, s1 == 0, false, false);
+                break;
+            case 0xbc: // chmk
+                chmk();
                 break;
             default:
                 throw error("%08x: unknown opcode %02x", r[PC] - 1, opcode);
