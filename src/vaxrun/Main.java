@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Stack;
 
 enum VAXType {
 
@@ -338,6 +339,11 @@ class VAXDisasm {
         return ".word " + hex(Short.toUnsignedInt((short) fetch(2)));
     }
 
+    public String word1(int pc) {
+        this.pc = pc;
+        return word1();
+    }
+
     public String address(int ad) {
         String ret = String.format("0x%x", ad);
         if (aout != null && aout.symT.containsKey(ad)) {
@@ -430,6 +436,17 @@ class AOut {
     }
 }
 
+class AddrSym {
+
+    public final int addr;
+    public final String sym;
+
+    public AddrSym(int addr, String sym) {
+        this.addr = addr;
+        this.sym = sym;
+    }
+}
+
 class VAX {
 
     public static final int AP = 12, FP = 13, SP = 14, PC = 15;
@@ -439,13 +456,14 @@ class VAX {
     private final ByteBuffer buf;
     private final AOut aout;
     private final VAXDisasm dis;
+    private final Stack<AddrSym> callStack = new Stack<>();
 
     public VAX(AOut aout, String[] args) {
         this.aout = aout;
         System.arraycopy(aout.text, 0, mem, 0, aout.a_text);
         int dstart = (aout.a_text + 0x1ff) & ~0x1ff;
         System.arraycopy(aout.data, 0, mem, dstart, aout.a_data);
-        r[PC] = aout.a_entry + 2;
+        r[PC] = aout.a_entry;
         buf = ByteBuffer.wrap(mem).order(ByteOrder.LITTLE_ENDIAN);
         dis = new VAXDisasm(buf, aout);
         setArgs(args);
@@ -646,6 +664,15 @@ class VAX {
                 r[15], dis.disasm1(r[PC]));
     }
 
+    public void pushCallStack(boolean verbose) {
+        String sym = aout.symT.getOrDefault(r[PC], "???");
+        callStack.push(new AddrSym(r[PC], sym));
+        if (verbose) {
+            System.err.printf("%-139s %08x %s\n", sym + ":", r[PC], dis.word1(r[PC]));
+        }
+        r[PC] += 2;
+    }
+
     public void run(boolean verbose) throws Exception {
         if (verbose) {
             System.err.print("   r0       r1       r2       r3   -");
@@ -653,6 +680,7 @@ class VAX {
             System.err.print("   r8       r9       r10      r11  -");
             System.err.println(" r12(ap)  r13(fp)  r14(sp) flag  r15(pc) disasm");
         }
+        pushCallStack(verbose);
         int pc = r[PC];
         try {
             for (;;) {
@@ -660,6 +688,16 @@ class VAX {
                 step(verbose);
             }
         } catch (Exception e) {
+            if (!callStack.empty()) {
+                for (int i = 0; i < callStack.size(); ++i) {
+                    if (i > 0) {
+                        System.err.print(" > ");
+                    }
+                    AddrSym asym = callStack.elementAt(i);
+                    System.err.printf("%08x(%s)", asym.addr, asym.sym);
+                }
+                System.err.println();
+            }
             dis.disasm(System.err, pc, pc + 1);
             throw e;
         }
@@ -818,8 +856,9 @@ class VAX {
                         | (c ? 1 : 0));
                 set(r[SP] -= 4, 4, 0); // handler
                 r[AP] = tmp;
-                r[PC] = s2 + 2;
+                r[PC] = s2;
                 n = z = v = c = false;
+                pushCallStack(verbose);
                 break;
             default:
                 throw error("%08x: unknown opcode %02x", r[PC] - 1, opcode);
