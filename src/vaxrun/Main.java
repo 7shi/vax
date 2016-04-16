@@ -323,9 +323,9 @@ class VAXDisasm {
                 }
                 if (aout.symT.containsKey(oldpc)) {
                     System.out.printf("%s:\n", aout.symT.get(oldpc));
-                    asm = word1();
+                    asm = VAXDisasm.this.word();
                 } else if (oldpc == aout.a_entry) {
-                    asm = word1();
+                    asm = VAXDisasm.this.word();
                 }
             }
             if (asm == null) {
@@ -335,13 +335,13 @@ class VAXDisasm {
         }
     }
 
-    public String word1() {
+    public String word() {
         return ".word " + hex(Short.toUnsignedInt((short) fetch(2)));
     }
 
-    public String word1(int pc) {
+    public String word(int pc) {
         this.pc = pc;
-        return word1();
+        return VAXDisasm.this.word();
     }
 
     public String address(int ad) {
@@ -668,7 +668,7 @@ class VAX {
         String sym = aout.symT.getOrDefault(r[PC], "???");
         callStack.push(new AddrSym(r[PC], sym));
         if (verbose) {
-            System.err.printf("%-139s %08x %s\n", sym + ":", r[PC], dis.word1(r[PC]));
+            System.err.printf("%-139s %08x %s\n", sym + ":", r[PC], dis.word(r[PC]));
         }
         r[PC] += 2;
     }
