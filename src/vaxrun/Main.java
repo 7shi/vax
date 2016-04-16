@@ -841,8 +841,7 @@ class VAX {
                 d = setOperand(size, s2 - s1);
                 setNZVC(d < 0, d == 0,
                         (s1 < 0) != (s2 < 0) && (s2 < 0) != (d < 0),
-                        Integer.compareUnsigned(s2, d) < 0
-                );
+                        Integer.compareUnsigned(s2, d) < 0);
                 break;
             case 0x90: // movb
             case 0xb0: // movw
@@ -858,8 +857,7 @@ class VAX {
                 d = s1 - s2;
                 setNZVC(d < 0, d == 0,
                         (s1 < 0) != (s2 < 0) && (s1 < 0) != (d < 0),
-                        Integer.compareUnsigned(s1, d) < 0
-                );
+                        Integer.compareUnsigned(s1, d) < 0);
                 break;
             case 0x94: // clrb
             case 0xb4: // clrw
