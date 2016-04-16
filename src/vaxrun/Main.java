@@ -557,10 +557,7 @@ class VAX {
             case 3:
                 return b;
             case 5: // r
-            {
-                int ret = reg(rn, 1);
-                return size == 1 ? (byte) ret : size == 2 ? (short) ret : ret;
-            }
+                return reg(rn, 1);
             case 6: // (r)
                 return get(reg(rn, 1), size);
             case 8: // (r)+
@@ -585,11 +582,8 @@ class VAX {
                 ++r[PC];
                 return b;
             case 5: // r
-            {
                 ++r[PC];
-                int ret = r[b & 15];
-                return size == 1 ? (byte) ret : size == 2 ? (short) ret : ret;
-            }
+                return r[b & 15];
         }
         return get(getAddress(size), size);
     }
