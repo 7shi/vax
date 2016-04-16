@@ -713,7 +713,7 @@ class VAX {
         }
         int opcode = fetch();
         int size = 1 << ((opcode & 0x7f) >> 5);
-        int s1, s2, d, tmp;
+        int s1, s2, s3, d, tmp;
         switch (opcode) {
             case 0x12: // bneq / bnequ
                 s1 = fetch(1);
@@ -785,6 +785,22 @@ class VAX {
                 s1 = fetch(1);
                 if (c) {
                     r[PC] += s1;
+                }
+                break;
+            case 0xe0: // bbs
+                s1 = getOperand(4);
+                s2 = getOperand(1);
+                s3 = fetch(1);
+                if ((s2 & (1 << s1)) != 0) {
+                    r[PC] += s3;
+                }
+                break;
+            case 0xe1: // bbc
+                s1 = getOperand(4);
+                s2 = getOperand(1);
+                s3 = fetch(1);
+                if ((s2 & (1 << s1)) == 0) {
+                    r[PC] += s3;
                 }
                 break;
             case 0x82: // subb2
