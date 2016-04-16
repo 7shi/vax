@@ -890,6 +890,12 @@ class VAX {
                 s1 = setOperand(4, getAddress(size));
                 setNZVC(s1 < 0, s1 == 0, false, c);
                 break;
+            case 0x9f: // pushab
+            case 0x3f: // pushaw
+            case 0xdf: // pushal
+                push(4, s1 = getAddress(size));
+                setNZVC(s1 < 0, s1 == 0, false, c);
+                break;
             case 0xdd: // pushl
                 push(4, s1 = getOperand(4));
                 setNZVC(s1 < 0, s1 == 0, false, c);
