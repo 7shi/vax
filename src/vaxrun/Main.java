@@ -848,7 +848,7 @@ class VAX {
                 tmp = r[SP];
                 r[SP] &= ~3;
                 if ((d & 0xfff) != 0) {
-                    for (int i = 11, bit = 0x80; i >= 0; --i, bit >>= 1) {
+                    for (int i = 11, bit = 0x800; i >= 0; --i, bit >>= 1) {
                         if ((d & bit) != 0) {
                             push(4, r[i]);
                         }
@@ -866,6 +866,7 @@ class VAX {
                         | (c ? 1 : 0));
                 push(4, 0); // handler
                 r[AP] = tmp;
+                r[FP] = r[SP];
                 r[PC] = s2;
                 n = z = v = c = false;
                 pushCallStack(verbose);
