@@ -821,6 +821,12 @@ class VAX {
                         Integer.compareUnsigned(s1, d) < 0
                 );
                 break;
+            case 0x94: // clrb
+            case 0xb4: // clrw
+            case 0xd4: // clrl / clrf
+                setOperand(size, 0);
+                setNZVC(false, true, false, c);
+                break;
             case 0x95: // tstb
             case 0xb5: // tstw
             case 0xd5: // tstl
