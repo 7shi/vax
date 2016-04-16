@@ -560,6 +560,8 @@ class VAX {
                 return reg(rn, 1);
             case 6: // (r)
                 return get(reg(rn, 1), size);
+            case 7: // -(r)
+                return get(reg(rn, 1) - size, size);
             case 8: // (r)+
                 return get(reg(rn, 1), size);
             case 0xa: // b(r)
@@ -595,6 +597,8 @@ class VAX {
         switch (b >> 4) {
             case 6: // (r)
                 return r[rn];
+            case 7: // -(r)
+                return r[rn] -= size;
             case 8: // (r)+
                 ret = r[rn];
                 r[rn] += size;
@@ -620,6 +624,8 @@ class VAX {
                 return r[rn] = size == 1 ? (byte) value : size == 2 ? (short) value : value;
             case 6: // (r)
                 return set(r[rn], size, value);
+            case 7: // -(r)
+                return set(r[rn] -= size, size, value);
             case 8: // (r)+
                 ret = set(r[rn], size, value);
                 r[rn] += size;
