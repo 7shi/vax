@@ -664,11 +664,25 @@ class VAX {
                 r[15], dis.disasm1(r[PC]));
     }
 
+    public String getCallStack() {
+        if (callStack.empty()) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < callStack.size(); ++i) {
+            if (i > 0) {
+                sb.append(" > ");
+            }
+            sb.append(callStack.elementAt(i).sym);
+        }
+        return sb.toString();
+    }
+
     public void pushCallStack(boolean verbose) {
         String sym = aout.symT.getOrDefault(r[PC], "???");
         callStack.push(new AddrSym(r[PC], sym));
         if (verbose) {
-            System.err.printf("%-139s %08x %s\n", sym + ":", r[PC], dis.word(r[PC]));
+            System.err.printf("%-139s %08x %s\n", getCallStack(), r[PC], dis.word(r[PC]));
         }
         r[PC] += 2;
     }
@@ -957,6 +971,9 @@ class VAX {
                     r[SP] += s1 * 4;
                 }
                 callStack.pop();
+                if (verbose) {
+                    System.err.println(getCallStack());
+                }
                 break;
             default:
                 throw error("%08x: unknown opcode %02x", r[PC] - 1, opcode);
