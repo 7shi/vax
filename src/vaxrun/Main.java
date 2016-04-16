@@ -782,8 +782,8 @@ class VAX {
             case 0x9e: // movab
             case 0x3e: // movaw
             case 0xde: // moval
-                setOperand(4, d = getAddress(size));
-                setNZVC(d < 0, d == 0, false, c);
+                setOperand(4, s1 = getAddress(size));
+                setNZVC(s1 < 0, s1 == 0, false, c);
                 break;
             case 0xdd: // pushl
                 set(r[SP] -= 4, 4, s1 = getOperand(4));
