@@ -210,7 +210,7 @@ class VAXDisasm {
     public String fetchHex(int size, String suffix) {
         int[] bs = new int[size];
         for (int i = 0; i < size; ++i) {
-            bs[i] = VAXDisasm.this.fetch();
+            bs[i] = fetch();
         }
         StringBuilder sb = new StringBuilder();
         for (int i = size - 1; i >= 0; --i) {
@@ -253,7 +253,7 @@ class VAXDisasm {
             int rel = fetch(t.size);
             return String.format("0x%x", pc + rel);
         }
-        int b = VAXDisasm.this.fetch(), b1 = b >> 4, b2 = b & 15;
+        int b = fetch(), b1 = b >> 4, b2 = b & 15;
         String r = regs[b2];
         switch (b1) {
             case 0:
@@ -295,10 +295,10 @@ class VAXDisasm {
 
     public String disasm1(int addr) {
         pc = addr;
-        int opc = VAXDisasm.this.fetch();
+        int opc = fetch();
         VAXOp op = VAXOp.table[opc];
         if (op == null) {
-            op = VAXOp.table[opc = opc << 8 | VAXDisasm.this.fetch()];
+            op = VAXOp.table[opc = opc << 8 | fetch()];
         }
         if (op == null) {
             return String.format(".word 0x%x", opc);
@@ -323,9 +323,9 @@ class VAXDisasm {
                 }
                 if (aout.symT.containsKey(oldpc)) {
                     System.out.printf("%s:\n", aout.symT.get(oldpc));
-                    asm = VAXDisasm.this.word();
+                    asm = word();
                 } else if (oldpc == aout.a_entry) {
-                    asm = VAXDisasm.this.word();
+                    asm = word();
                 }
             }
             if (asm == null) {
@@ -341,7 +341,7 @@ class VAXDisasm {
 
     public String word(int pc) {
         this.pc = pc;
-        return VAXDisasm.this.word();
+        return word();
     }
 
     public String address(int ad) {
@@ -591,7 +591,7 @@ class VAX {
 
     public int getAddress(int size) throws Exception {
         int pc = r[PC];
-        int b = VAX.this.fetch();
+        int b = fetch();
         int rn = b & 15, disp, ret;
         switch (b >> 4) {
             case 6: // (r)
@@ -614,7 +614,7 @@ class VAX {
     }
 
     public void setOperand(int size, int value) throws Exception {
-        int b = VAX.this.fetch();
+        int b = fetch();
         int rn = b & 15, disp;
         switch (b >> 4) {
             case 5: // r
@@ -644,7 +644,7 @@ class VAX {
     }
 
     public void chmk() throws Exception {
-        int syscall = VAX.this.fetch();
+        int syscall = fetch();
         switch (syscall) {
             case 1: // exit
                 System.exit(buf.getInt(r[AP] + 4));
@@ -707,7 +707,7 @@ class VAX {
         if (verbose) {
             debug();
         }
-        int opcode = VAX.this.fetch();
+        int opcode = fetch();
         int size = 1 << ((opcode & 0x7f) >> 5);
         int s1, s2, d, tmp;
         switch (opcode) {
