@@ -671,7 +671,7 @@ class VAX {
         }
         int opcode = fetch();
         int size = 1 << ((opcode & 0x7f) >> 5);
-        int s1, s2, d;
+        int s1, s2, d, tmp;
         switch (opcode) {
             case 0x12: // bneq / bnequ
                 s1 = fetchSigned(1);
@@ -787,6 +787,35 @@ class VAX {
                 break;
             case 0xbc: // chmk
                 chmk();
+                break;
+            case 0xfb: // calls
+                s1 = Byte.toUnsignedInt(mem[r[PC]++]);
+                s2 = getAddr(4);
+                d = getSigned(s2, 2); // entry mask
+                setSigned(tmp = (r[SP] -= 4), 4, s1);
+                r[SP] &= ~3;
+                if ((d & 0xfff) != 0) {
+                    for (int i = 11, bit = 0x80; i >= 0; --i, bit >>= 1) {
+                        if ((d & bit) != 0) {
+                            setSigned(r[SP] -= 4, 4, r[i]);
+                        }
+                    }
+                }
+                setSigned(r[SP] -= 4, 4, r[PC]);
+                setSigned(r[SP] -= 4, 4, r[FP]);
+                setSigned(r[SP] -= 4, 4, r[AP]);
+                setSigned(r[SP] -= 4, 4,
+                        ((tmp & 3) << 30)
+                        | 0x2000
+                        | ((d & 0xfff) << 16)
+                        | (n ? 8 : 0)
+                        | (z ? 4 : 0)
+                        | (v ? 2 : 0)
+                        | (c ? 1 : 0));
+                setSigned(r[SP] -= 4, 4, 0); // handler
+                r[AP] = tmp;
+                r[PC] = s2 + 2;
+                n = z = v = c = false;
                 break;
             default:
                 throw error("%08x: unknown opcode %02x", r[PC] - 1, opcode);
