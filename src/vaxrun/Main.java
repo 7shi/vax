@@ -871,6 +871,30 @@ class VAX {
                 n = z = v = c = false;
                 pushCallStack(verbose);
                 break;
+            case 0x04: // ret
+                r[SP] = r[FP] + 4;
+                tmp = pop(4);
+                n = (tmp & 8) != 0;
+                z = (tmp & 4) != 0;
+                v = (tmp & 2) != 0;
+                c = (tmp & 1) != 0;
+                r[AP] = pop(4);
+                r[FP] = pop(4);
+                r[PC] = pop(4);
+                if ((tmp & 0xfff0000) != 0) {
+                    for (int i = 0, bit = 0x10000; i <= 11; ++i, bit <<= 1) {
+                        if ((tmp & bit) != 0) {
+                            r[i] = pop(4);
+                        }
+                    }
+                }
+                r[SP] += (tmp >> 30) & 3;
+                if ((tmp & 0x2000) != 0) { // calls
+                    s1 = pop(4); // argc
+                    r[SP] += s1 * 4;
+                }
+                callStack.pop();
+                break;
             default:
                 throw error("%08x: unknown opcode %02x", r[PC] - 1, opcode);
         }
