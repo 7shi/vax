@@ -653,6 +653,15 @@ class VAX {
                 System.out.print(getString(buf.getInt(r[AP] + 8), buf.getInt(r[AP] + 12)));
                 return;
         }
+        int argc = buf.getInt(r[AP]);
+        System.err.printf("[args] ", r[AP]);
+        for (int i = 0; i < argc; ++i) {
+            if (i > 0) {
+                System.err.print(", ");
+            }
+            System.err.printf("%08x", buf.getInt(r[AP] + 4 + i * 4));
+        }
+        System.err.println();
         throw error("%08x: unknown syscall %02x", r[PC] - 1, syscall);
     }
 
