@@ -673,6 +673,16 @@ class VAX {
         r[PC] += 2;
     }
 
+    public void push(int size, int value) throws Exception {
+        set(r[SP] -= size, size, value);
+    }
+
+    public int pop(int size) throws Exception {
+        int ret = get(r[SP], size);
+        r[SP] += size;
+        return ret;
+    }
+
     public void run(boolean verbose) throws Exception {
         if (verbose) {
             System.err.print("   r0       r1       r2       r3   -");
@@ -824,7 +834,7 @@ class VAX {
                 setNZVC(s1 < 0, s1 == 0, false, c);
                 break;
             case 0xdd: // pushl
-                set(r[SP] -= 4, 4, s1 = getOperand(4));
+                push(4, s1 = getOperand(4));
                 setNZVC(s1 < 0, s1 == 0, false, c);
                 break;
             case 0xbc: // chmk
@@ -834,27 +844,27 @@ class VAX {
                 s1 = Byte.toUnsignedInt(mem[r[PC]++]);
                 s2 = getAddress(4);
                 d = get(s2, 2); // entry mask
-                set(tmp = (r[SP] -= 4), 4, s1);
+                push(4, s1);
+                tmp = r[SP];
                 r[SP] &= ~3;
                 if ((d & 0xfff) != 0) {
                     for (int i = 11, bit = 0x80; i >= 0; --i, bit >>= 1) {
                         if ((d & bit) != 0) {
-                            set(r[SP] -= 4, 4, r[i]);
+                            push(4, r[i]);
                         }
                     }
                 }
-                set(r[SP] -= 4, 4, r[PC]);
-                set(r[SP] -= 4, 4, r[FP]);
-                set(r[SP] -= 4, 4, r[AP]);
-                set(r[SP] -= 4, 4,
-                        ((tmp & 3) << 30)
+                push(4, r[PC]);
+                push(4, r[FP]);
+                push(4, r[AP]);
+                push(4, ((tmp & 3) << 30)
                         | 0x2000
                         | ((d & 0xfff) << 16)
                         | (n ? 8 : 0)
                         | (z ? 4 : 0)
                         | (v ? 2 : 0)
                         | (c ? 1 : 0));
-                set(r[SP] -= 4, 4, 0); // handler
+                push(4, 0); // handler
                 r[AP] = tmp;
                 r[PC] = s2;
                 n = z = v = c = false;
