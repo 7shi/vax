@@ -519,17 +519,16 @@ class VAX {
         throw new Exception("invalid size " + size);
     }
 
-    public void set(int addr, int size, int value) throws Exception {
+    public int set(int addr, int size, int value) throws Exception {
         switch (size) {
             case 1:
-                mem[addr] = (byte) value;
-                return;
+                return mem[addr] = (byte) value;
             case 2:
                 buf.putShort(addr, (short) value);
-                return;
+                return (short) value;
             case 4:
                 buf.putInt(addr, value);
-                return;
+                return value;
         }
         throw new Exception("invalid size " + size);
     }
@@ -558,7 +557,10 @@ class VAX {
             case 3:
                 return b;
             case 5: // r
-                return reg(rn, 1);
+            {
+                int ret = reg(rn, 1);
+                return size == 1 ? (byte) ret : size == 2 ? (short) ret : ret;
+            }
             case 6: // (r)
                 return get(reg(rn, 1), size);
             case 8: // (r)+
@@ -583,8 +585,11 @@ class VAX {
                 ++r[PC];
                 return b;
             case 5: // r
+            {
                 ++r[PC];
-                return r[b & 15];
+                int ret = r[b & 15];
+                return size == 1 ? (byte) ret : size == 2 ? (short) ret : ret;
+            }
         }
         return get(getAddress(size), size);
     }
@@ -613,32 +618,27 @@ class VAX {
         throw error("%08x: not addr %02x", pc, b);
     }
 
-    public void setOperand(int size, int value) throws Exception {
+    public int setOperand(int size, int value) throws Exception {
         int b = fetch();
-        int rn = b & 15, disp;
+        int rn = b & 15, disp, ret;
         switch (b >> 4) {
             case 5: // r
-                r[rn] = value;
-                return;
+                return r[rn] = size == 1 ? (byte) value : size == 2 ? (short) value : value;
             case 6: // (r)
-                set(r[rn], size, value);
-                return;
+                return set(r[rn], size, value);
             case 8: // (r)+
-                set(r[rn], size, value);
+                ret = set(r[rn], size, value);
                 r[rn] += size;
-                return;
+                return ret;
             case 0xa: // b(r)
                 disp = fetch(1);
-                set(r[rn] + disp, size, value);
-                return;
+                return set(r[rn] + disp, size, value);
             case 0xb: // *b(r)
                 disp = fetch(1);
-                set(get(r[rn] + disp, 4), size, value);
-                return;
+                return set(get(r[rn] + disp, 4), size, value);
             case 0xe: // l(r)
                 disp = fetch(4);
-                set(r[rn] + disp, size, value);
-                return;
+                return set(r[rn] + disp, size, value);
         }
         throw error("%08x: unknown operand %02x", r[PC] - 1, b);
     }
@@ -798,7 +798,7 @@ class VAX {
             case 0xc2: // subl2
                 s1 = getOperand(size);
                 s2 = peekOperand(size);
-                setOperand(size, d = s2 - s1);
+                d = setOperand(size, s2 - s1);
                 setNZVC(d < 0, d == 0,
                         (s1 < 0) != (s2 < 0) && (s2 < 0) != (d < 0),
                         Integer.compareUnsigned(s2, d) < 0
@@ -807,7 +807,7 @@ class VAX {
             case 0x90: // movb
             case 0xb0: // movw
             case 0xd0: // movl
-                setOperand(size, d = getOperand(size));
+                d = setOperand(size, getOperand(size));
                 setNZVC(d < 0, d == 0, false, c);
                 break;
             case 0x91: // cmpb
@@ -837,7 +837,7 @@ class VAX {
             case 0xb7: // decw
             case 0xd7: // decl
                 s1 = peekOperand(size);
-                setOperand(size, d = --s1);
+                d = setOperand(size, --s1);
                 setNZVC(d < 0, d == 0,
                         s1 < 0 && d >= 0,
                         Integer.compareUnsigned(s1, d) < 0
@@ -846,7 +846,7 @@ class VAX {
             case 0x9e: // movab
             case 0x3e: // movaw
             case 0xde: // moval
-                setOperand(4, s1 = getAddress(size));
+                s1 = setOperand(4, getAddress(size));
                 setNZVC(s1 < 0, s1 == 0, false, c);
                 break;
             case 0xdd: // pushl
