@@ -785,6 +785,10 @@ class VAX {
                 setOperand(4, d = getAddress(size));
                 setNZVC(d < 0, d == 0, false, c);
                 break;
+            case 0xdd: // pushl
+                set(r[SP] -= 4, 4, s1 = getOperand(4));
+                setNZVC(s1 < 0, s1 == 0, false, c);
+                break;
             case 0xbc: // chmk
                 chmk();
                 break;
