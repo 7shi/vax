@@ -192,7 +192,7 @@ class VAXDisasm {
         return Byte.toUnsignedInt(buf.get(pc++));
     }
 
-    public int fetchSigned(int size) {
+    public int fetch(int size) {
         int oldpc = pc;
         pc += size;
         switch (size) {
@@ -209,7 +209,7 @@ class VAXDisasm {
     public String fetchHex(int size, String suffix) {
         int[] bs = new int[size];
         for (int i = 0; i < size; ++i) {
-            bs[i] = fetch();
+            bs[i] = VAXDisasm.this.fetch();
         }
         StringBuilder sb = new StringBuilder();
         for (int i = size - 1; i >= 0; --i) {
@@ -247,12 +247,12 @@ class VAXDisasm {
         out.println();
     }
 
-    public String getOpr(VAXType t) {
+    public String getOperand(VAXType t) {
         if (t == VAXType.RELB || t == VAXType.RELW) {
-            int rel = fetchSigned(t.size);
+            int rel = fetch(t.size);
             return String.format("0x%x", pc + rel);
         }
-        int b = fetch(), b1 = b >> 4, b2 = b & 15;
+        int b = VAXDisasm.this.fetch(), b1 = b >> 4, b2 = b & 15;
         String r = regs[b2];
         switch (b1) {
             case 0:
@@ -261,7 +261,7 @@ class VAXDisasm {
             case 3:
                 return "$" + hex(b) + t.valueSuffix;
             case 4:
-                return getOpr(t) + "[" + r + "]";
+                return getOperand(t) + "[" + r + "]";
             case 5:
                 return r;
             case 6:
@@ -276,15 +276,15 @@ class VAXDisasm {
                 }
             case 9:
                 if (b2 == 15) {
-                    return "*" + addr(fetchSigned(4));
+                    return "*" + address(fetch(4));
                 } else {
                     return "*(" + r + ")+";
                 }
             default: {
                 String prefix = (b1 & 1) == 1 ? "*" : "";
-                int disp = fetchSigned(1 << ((b1 - 0xa) >> 1));
+                int disp = fetch(1 << ((b1 - 0xa) >> 1));
                 if (b2 == 15) {
-                    return prefix + addr(pc + disp);
+                    return prefix + address(pc + disp);
                 } else {
                     return String.format("%s%s(%s)", prefix, hex(disp), r);
                 }
@@ -294,10 +294,10 @@ class VAXDisasm {
 
     public String disasm1(int addr) {
         pc = addr;
-        int opc = fetch();
+        int opc = VAXDisasm.this.fetch();
         VAXOp op = VAXOp.table[opc];
         if (op == null) {
-            op = VAXOp.table[opc = opc << 8 | fetch()];
+            op = VAXOp.table[opc = opc << 8 | VAXDisasm.this.fetch()];
         }
         if (op == null) {
             return String.format(".word 0x%x", opc);
@@ -305,7 +305,7 @@ class VAXDisasm {
         StringBuilder sb = new StringBuilder(op.mne);
         for (int i = 0; i < op.oprs.length; ++i) {
             sb.append(i == 0 ? " " : ",");
-            sb.append(getOpr(VAXType.table[op.oprs[i]]));
+            sb.append(getOperand(VAXType.table[op.oprs[i]]));
         }
         return sb.toString();
     }
@@ -335,10 +335,10 @@ class VAXDisasm {
     }
 
     public String word1() {
-        return ".word " + hex(Short.toUnsignedInt((short) fetchSigned(2)));
+        return ".word " + hex(Short.toUnsignedInt((short) fetch(2)));
     }
 
-    public String addr(int ad) {
+    public String address(int ad) {
         String ret = String.format("0x%x", ad);
         if (aout != null && aout.symT.containsKey(ad)) {
             ret += "<" + aout.symT.get(ad) + ">";
@@ -483,13 +483,13 @@ class VAX {
         return Byte.toUnsignedInt(mem[r[PC]++]);
     }
 
-    public int fetchSigned(int size) throws Exception {
+    public int fetch(int size) throws Exception {
         int pc = r[PC];
         r[PC] += size;
-        return getSigned(pc, size);
+        return get(pc, size);
     }
 
-    public int getSigned(int addr, int size) throws Exception {
+    public int get(int addr, int size) throws Exception {
         switch (size) {
             case 1:
                 return mem[addr];
@@ -501,7 +501,7 @@ class VAX {
         throw new Exception("invalid size " + size);
     }
 
-    public void setSigned(int addr, int size, int value) throws Exception {
+    public void set(int addr, int size, int value) throws Exception {
         switch (size) {
             case 1:
                 mem[addr] = (byte) value;
@@ -542,15 +542,15 @@ class VAX {
             case 5: // r
                 return reg(rn, 1);
             case 6: // (r)
-                return getSigned(reg(rn, 1), size);
+                return get(reg(rn, 1), size);
             case 8: // (r)+
-                return getSigned(reg(rn, 1), size);
+                return get(reg(rn, 1), size);
             case 0xa: // b(r)
-                return getSigned(reg(rn, 2) + mem[pc], size);
+                return get(reg(rn, 2) + mem[pc], size);
             case 0xb: // *b(r)
-                return getSigned(getSigned(reg(rn, 2) + mem[pc], 4), size);
+                return get(get(reg(rn, 2) + mem[pc], 4), size);
             case 0xe: // l(r)
-                return getSigned(reg(rn, 5) + buf.getInt(pc), size);
+                return get(reg(rn, 5) + buf.getInt(pc), size);
         }
         throw error("%08x: unknown operand %02x", r[PC], b);
     }
@@ -568,12 +568,12 @@ class VAX {
                 ++r[PC];
                 return r[b & 15];
         }
-        return getSigned(getAddr(size), size);
+        return get(getAddress(size), size);
     }
 
-    public int getAddr(int size) throws Exception {
+    public int getAddress(int size) throws Exception {
         int pc = r[PC];
-        int b = fetch();
+        int b = VAX.this.fetch();
         int rn = b & 15, disp, ret;
         switch (b >> 4) {
             case 6: // (r)
@@ -583,50 +583,50 @@ class VAX {
                 r[rn] += size;
                 return ret;
             case 0xa: // b(r)
-                disp = fetchSigned(1);
+                disp = fetch(1);
                 return r[rn] + disp;
             case 0xb: // *b(r)
-                disp = fetchSigned(1);
-                return getSigned(r[rn] + disp, 4);
+                disp = fetch(1);
+                return get(r[rn] + disp, 4);
             case 0xe: // l(r)
-                disp = fetchSigned(4);
+                disp = fetch(4);
                 return r[rn] + disp;
         }
         throw error("%08x: not addr %02x", pc, b);
     }
 
     public void setOperand(int size, int value) throws Exception {
-        int b = fetch();
+        int b = VAX.this.fetch();
         int rn = b & 15, disp;
         switch (b >> 4) {
             case 5: // r
                 r[rn] = value;
                 return;
             case 6: // (r)
-                setSigned(r[rn], size, value);
+                set(r[rn], size, value);
                 return;
             case 8: // (r)+
-                setSigned(r[rn], size, value);
+                set(r[rn], size, value);
                 r[rn] += size;
                 return;
             case 0xa: // b(r)
-                disp = fetchSigned(1);
-                setSigned(r[rn] + disp, size, value);
+                disp = fetch(1);
+                set(r[rn] + disp, size, value);
                 return;
             case 0xb: // *b(r)
-                disp = fetchSigned(1);
-                setSigned(getSigned(r[rn] + disp, 4), size, value);
+                disp = fetch(1);
+                set(get(r[rn] + disp, 4), size, value);
                 return;
             case 0xe: // l(r)
-                disp = fetchSigned(4);
-                setSigned(r[rn] + disp, size, value);
+                disp = fetch(4);
+                set(r[rn] + disp, size, value);
                 return;
         }
         throw error("%08x: unknown operand %02x", r[PC] - 1, b);
     }
 
     public void chmk() throws Exception {
-        int syscall = fetch();
+        int syscall = VAX.this.fetch();
         switch (syscall) {
             case 1: // exit
                 System.exit(buf.getInt(r[AP] + 4));
@@ -669,78 +669,78 @@ class VAX {
         if (verbose) {
             debug();
         }
-        int opcode = fetch();
+        int opcode = VAX.this.fetch();
         int size = 1 << ((opcode & 0x7f) >> 5);
         int s1, s2, d, tmp;
         switch (opcode) {
             case 0x12: // bneq / bnequ
-                s1 = fetchSigned(1);
+                s1 = fetch(1);
                 if (!z) {
                     r[PC] += s1;
                 }
                 break;
             case 0x13: // beql / beqlu
-                s1 = fetchSigned(1);
+                s1 = fetch(1);
                 if (z) {
                     r[PC] += s1;
                 }
                 break;
             case 0x14: // bgtr
-                s1 = fetchSigned(1);
+                s1 = fetch(1);
                 if (!(n || z)) {
                     r[PC] += s1;
                 }
                 break;
             case 0x15: // bleq
-                s1 = fetchSigned(1);
+                s1 = fetch(1);
                 if (n || z) {
                     r[PC] += s1;
                 }
                 break;
             case 0x18: // bgeq
-                s1 = fetchSigned(1);
+                s1 = fetch(1);
                 if (!n) {
                     r[PC] += s1;
                 }
                 break;
             case 0x19: // blss
-                s1 = fetchSigned(1);
+                s1 = fetch(1);
                 if (n) {
                     r[PC] += s1;
                 }
                 break;
             case 0x1a: // bgtru
-                s1 = fetchSigned(1);
+                s1 = fetch(1);
                 if (!(c || z)) {
                     r[PC] += s1;
                 }
                 break;
             case 0x1b: // blequ
-                s1 = fetchSigned(1);
+                s1 = fetch(1);
                 if (c || z) {
                     r[PC] += s1;
                 }
                 break;
             case 0x1c: // bvc
-                s1 = fetchSigned(1);
+                s1 = fetch(1);
                 if (!v) {
                     r[PC] += s1;
                 }
                 break;
             case 0x1d: // bvs
-                s1 = fetchSigned(1);
+                s1 = fetch(1);
                 if (v) {
                     r[PC] += s1;
                 }
                 break;
             case 0x1e: // bgequ / bcc
-                s1 = fetchSigned(1);
+                s1 = fetch(1);
                 if (!c) {
                     r[PC] += s1;
                 }
                 break;
             case 0x1f: // blssu / bcs
-                s1 = fetchSigned(1);
+                s1 = fetch(1);
                 if (c) {
                     r[PC] += s1;
                 }
@@ -782,7 +782,7 @@ class VAX {
             case 0x9e: // movab
             case 0x3e: // movaw
             case 0xde: // moval
-                setOperand(4, d = getAddr(size));
+                setOperand(4, d = getAddress(size));
                 setNZVC(d < 0, d == 0, false, c);
                 break;
             case 0xbc: // chmk
@@ -790,21 +790,21 @@ class VAX {
                 break;
             case 0xfb: // calls
                 s1 = Byte.toUnsignedInt(mem[r[PC]++]);
-                s2 = getAddr(4);
-                d = getSigned(s2, 2); // entry mask
-                setSigned(tmp = (r[SP] -= 4), 4, s1);
+                s2 = getAddress(4);
+                d = get(s2, 2); // entry mask
+                set(tmp = (r[SP] -= 4), 4, s1);
                 r[SP] &= ~3;
                 if ((d & 0xfff) != 0) {
                     for (int i = 11, bit = 0x80; i >= 0; --i, bit >>= 1) {
                         if ((d & bit) != 0) {
-                            setSigned(r[SP] -= 4, 4, r[i]);
+                            set(r[SP] -= 4, 4, r[i]);
                         }
                     }
                 }
-                setSigned(r[SP] -= 4, 4, r[PC]);
-                setSigned(r[SP] -= 4, 4, r[FP]);
-                setSigned(r[SP] -= 4, 4, r[AP]);
-                setSigned(r[SP] -= 4, 4,
+                set(r[SP] -= 4, 4, r[PC]);
+                set(r[SP] -= 4, 4, r[FP]);
+                set(r[SP] -= 4, 4, r[AP]);
+                set(r[SP] -= 4, 4,
                         ((tmp & 3) << 30)
                         | 0x2000
                         | ((d & 0xfff) << 16)
@@ -812,7 +812,7 @@ class VAX {
                         | (z ? 4 : 0)
                         | (v ? 2 : 0)
                         | (c ? 1 : 0));
-                setSigned(r[SP] -= 4, 4, 0); // handler
+                set(r[SP] -= 4, 4, 0); // handler
                 r[AP] = tmp;
                 r[PC] = s2 + 2;
                 n = z = v = c = false;
