@@ -803,6 +803,36 @@ class VAX {
                     r[PC] += s3;
                 }
                 break;
+            case 0x99: // cvtbw
+                s1 = getOperand(1);
+                d = setOperand(2, s1);
+                setNZVC(d < 0, d == 0, s1 != d, false);
+                break;
+            case 0x98: // cvtbl
+                s1 = getOperand(1);
+                d = setOperand(4, s1);
+                setNZVC(d < 0, d == 0, s1 != d, false);
+                break;
+            case 0x33: // cvtwb
+                s1 = getOperand(2);
+                d = setOperand(1, s1);
+                setNZVC(d < 0, d == 0, s1 != d, false);
+                break;
+            case 0x32: // cvtwl
+                s1 = getOperand(2);
+                d = setOperand(4, s1);
+                setNZVC(d < 0, d == 0, s1 != d, false);
+                break;
+            case 0xf6: // cvtlb
+                s1 = getOperand(4);
+                d = setOperand(1, s1);
+                setNZVC(d < 0, d == 0, s1 != d, false);
+                break;
+            case 0xf7: // cvtlw
+                s1 = getOperand(4);
+                d = setOperand(2, s1);
+                setNZVC(d < 0, d == 0, s1 != d, false);
+                break;
             case 0x82: // subb2
             case 0xa2: // subw2
             case 0xc2: // subl2
