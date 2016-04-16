@@ -837,11 +837,8 @@ class VAX {
             case 0xb7: // decw
             case 0xd7: // decl
                 s1 = peekOperand(size);
-                d = setOperand(size, --s1);
-                setNZVC(d < 0, d == 0,
-                        s1 < 0 && d >= 0,
-                        Integer.compareUnsigned(s1, d) < 0
-                );
+                d = setOperand(size, s1 - 1);
+                setNZVC(d < 0, d == 0, s1 < 0 && d >= 0, s1 == 0);
                 break;
             case 0x9e: // movab
             case 0x3e: // movaw
