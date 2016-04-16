@@ -762,12 +762,6 @@ class VAX {
                 setOperand(size, d = getOperand(size));
                 setNZVC(d < 0, d == 0, false, c);
                 break;
-            case 0x9e: // movab
-            case 0x3e: // movaw
-            case 0xde: // moval
-                setOperand(4, d = getAddr(size));
-                setNZVC(d < 0, d == 0, false, c);
-                break;
             case 0x91: // cmpb
             case 0xb1: // cmpw
             case 0xd1: // cmpl
@@ -784,6 +778,12 @@ class VAX {
             case 0xd5: // tstl
                 s1 = getOperand(size);
                 setNZVC(s1 < 0, s1 == 0, false, false);
+                break;
+            case 0x9e: // movab
+            case 0x3e: // movaw
+            case 0xde: // moval
+                setOperand(4, d = getAddr(size));
+                setNZVC(d < 0, d == 0, false, c);
                 break;
             case 0xbc: // chmk
                 chmk();
