@@ -983,10 +983,10 @@ class VAX {
         "mpxchan", "(reserved)", "(reserved)", "exece", "umask", "chroot"};
 
     public void syscall() throws Exception {
-        int n = fetch();
+        int sc = fetch();
         if (mode >= 1) {
             int argc = buf.getInt(r[AP]);
-            System.err.printf("[syscall] %s(", syscalls[n]);
+            System.err.printf("[syscall] %s(", syscalls[sc]);
             for (int i = 0; i < argc; ++i) {
                 if (i > 0) {
                     System.err.print(", ");
@@ -995,7 +995,7 @@ class VAX {
             }
             System.err.println(")");
         }
-        switch (n) {
+        switch (sc) {
             case 1: // exit
                 System.exit(buf.getInt(r[AP] + 4));
                 return;
@@ -1003,7 +1003,7 @@ class VAX {
                 System.out.print(getString(buf.getInt(r[AP] + 8), buf.getInt(r[AP] + 12)));
                 return;
         }
-        throw error("%08x: unknown syscall %02x", r[PC] - 1, n);
+        throw error("%08x: unknown syscall %02x", r[PC] - 1, sc);
     }
 }
 
