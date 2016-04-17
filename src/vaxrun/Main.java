@@ -999,7 +999,7 @@ class VAX {
             case 1: // exit
                 System.exit(buf.getInt(r[AP] + 4));
                 return;
-            case 4:  // write
+            case 4: // write
                 System.out.print(getString(buf.getInt(r[AP] + 8), buf.getInt(r[AP] + 12)));
                 return;
         }
