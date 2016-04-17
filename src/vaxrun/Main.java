@@ -642,28 +642,6 @@ class VAX {
         throw error("%08x: unknown operand %02x", r[PC] - 1, b);
     }
 
-    public void chmk() throws Exception {
-        int syscall = fetch();
-        switch (syscall) {
-            case 1: // exit
-                System.exit(buf.getInt(r[AP] + 4));
-                return;
-            case 4:  // write
-                System.out.print(getString(buf.getInt(r[AP] + 8), buf.getInt(r[AP] + 12)));
-                return;
-        }
-        int argc = buf.getInt(r[AP]);
-        System.err.printf("[args] ", r[AP]);
-        for (int i = 0; i < argc; ++i) {
-            if (i > 0) {
-                System.err.print(", ");
-            }
-            System.err.printf("%08x", buf.getInt(r[AP] + 4 + i * 4));
-        }
-        System.err.println();
-        throw error("%08x: unknown syscall %02x", r[PC] - 1, syscall);
-    }
-
     public void debug() {
         System.err.printf("%08x %08x %08x %08x-%08x %08x %08x %08x-%08x %08x %08x %08x-%08x %08x %08x %c%c%c%c %08x %s\n",
                 r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7],
@@ -923,7 +901,7 @@ class VAX {
                 setNZVC(s1 < 0, s1 == 0, false, c);
                 break;
             case 0xbc: // chmk
-                chmk();
+                syscall(verbose);
                 break;
             case 0xfb: // calls
                 s1 = Byte.toUnsignedInt(mem[r[PC]++]);
@@ -990,6 +968,40 @@ class VAX {
 
     public void disasm(PrintStream out) {
         dis.disasm(out, 0, aout.a_text);
+    }
+
+    public final static String[] syscalls = {
+        "indir", "exit", "fork", "read", "write", "open", "close", "wait",
+        "creat", "link", "unlink", "exec", "chdir", "time", "mknod", "chmod",
+        "chown", "break", "stat", "seek", "getpid", "mount", "umount", "setuid",
+        "getuid", "stime", "ptrace", "alarm", "fstat", "pause", "utime", "stty",
+        "gtty", "access", "nice", "ftime", "sync", "kill", "switch", "setpgrp",
+        "tell", "dup", "pipe", "times", "prof", "tiu", "setgid", "getgid",
+        "sig", "(reserved)", "(reserved)", "sysacct", "sysphys", "syslock", "ioctl", "reboot",
+        "mpxchan", "(reserved)", "(reserved)", "exece", "umask", "chroot"};
+
+    public void syscall(boolean verbose) throws Exception {
+        int n = fetch();
+        if (verbose) {
+            int argc = buf.getInt(r[AP]);
+            System.err.printf("[syscall] %s(", syscalls[n]);
+            for (int i = 0; i < argc; ++i) {
+                if (i > 0) {
+                    System.err.print(", ");
+                }
+                System.err.printf("%08x", buf.getInt(r[AP] + 4 + i * 4));
+            }
+            System.err.println(")");
+        }
+        switch (n) {
+            case 1: // exit
+                System.exit(buf.getInt(r[AP] + 4));
+                return;
+            case 4:  // write
+                System.out.print(getString(buf.getInt(r[AP] + 8), buf.getInt(r[AP] + 12)));
+                return;
+        }
+        throw error("%08x: unknown syscall %02x", r[PC] - 1, n);
     }
 }
 
