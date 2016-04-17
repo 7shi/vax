@@ -456,6 +456,7 @@ class VAX {
     private final AOut aout;
     private final VAXDisasm dis;
     private final Stack<AddrSym> callStack = new Stack<>();
+    private int mode;
 
     public VAX(AOut aout, String[] args) {
         this.aout = aout;
@@ -664,10 +665,10 @@ class VAX {
         return sb.toString();
     }
 
-    public void pushCallStack(boolean verbose) {
+    public void pushCallStack() {
         String sym = aout.symT.getOrDefault(r[PC], "???");
         callStack.push(new AddrSym(r[PC], sym));
-        if (verbose) {
+        if (mode >= 2) {
             System.err.printf("%-139s %08x %s\n", getCallStack(), r[PC], dis.word(r[PC]));
         }
         r[PC] += 2;
@@ -683,19 +684,20 @@ class VAX {
         return ret;
     }
 
-    public void run(boolean verbose) throws Exception {
-        if (verbose) {
+    public void run(int mode) throws Exception {
+        this.mode = mode;
+        if (mode >= 2) {
             System.err.print("   r0       r1       r2       r3   -");
             System.err.print("   r4       r5       r6       r7   -");
             System.err.print("   r8       r9       r10      r11  -");
             System.err.println(" r12(ap)  r13(fp)  r14(sp) flag  r15(pc) disasm");
         }
-        pushCallStack(verbose);
+        pushCallStack();
         int pc = r[PC];
         try {
             for (;;) {
                 pc = r[PC];
-                step(verbose);
+                step();
             }
         } catch (Exception e) {
             if (!callStack.empty()) {
@@ -713,8 +715,8 @@ class VAX {
         }
     }
 
-    public void step(boolean verbose) throws Exception {
-        if (verbose) {
+    public void step() throws Exception {
+        if (mode >= 2) {
             debug();
         }
         int opcode = fetch();
@@ -901,7 +903,7 @@ class VAX {
                 setNZVC(s1 < 0, s1 == 0, false, c);
                 break;
             case 0xbc: // chmk
-                syscall(verbose);
+                syscall();
                 break;
             case 0xfb: // calls
                 s1 = Byte.toUnsignedInt(mem[r[PC]++]);
@@ -932,7 +934,7 @@ class VAX {
                 r[FP] = r[SP];
                 r[PC] = s2;
                 n = z = v = c = false;
-                pushCallStack(verbose);
+                pushCallStack();
                 break;
             case 0x04: // ret
                 r[SP] = r[FP] + 4;
@@ -957,7 +959,7 @@ class VAX {
                     r[SP] += s1 * 4;
                 }
                 callStack.pop();
-                if (verbose) {
+                if (mode >= 2) {
                     System.err.println(getCallStack());
                 }
                 break;
@@ -980,9 +982,9 @@ class VAX {
         "sig", "(reserved)", "(reserved)", "sysacct", "sysphys", "syslock", "ioctl", "reboot",
         "mpxchan", "(reserved)", "(reserved)", "exece", "umask", "chroot"};
 
-    public void syscall(boolean verbose) throws Exception {
+    public void syscall() throws Exception {
         int n = fetch();
-        if (verbose) {
+        if (mode >= 1) {
             int argc = buf.getInt(r[AP]);
             System.err.printf("[syscall] %s(", syscalls[n]);
             for (int i = 0; i < argc; ++i) {
@@ -1008,7 +1010,8 @@ class VAX {
 public class Main {
 
     public static void main(String[] args) {
-        boolean disasm = false, verbose = false;
+        boolean disasm = false;
+        int mode = 0;
         String aout = null;
         String[] args2 = null;
         OUTER:
@@ -1018,8 +1021,11 @@ public class Main {
                 case "-d":
                     disasm = true;
                     break;
+                case "-s":
+                    mode = 1;
+                    break;
                 case "-v":
-                    verbose = true;
+                    mode = 2;
                     break;
                 default:
                     aout = arg;
@@ -1031,6 +1037,7 @@ public class Main {
             System.err.println("usage: vaxrun [-d|-v] a.out [...]");
             System.err.println("    -d: disasm");
             System.err.println("    -v: verbose (debug mode)");
+            System.err.println("    -s: syscall (debug mode)");
             System.exit(1);
         }
         try {
@@ -1038,7 +1045,7 @@ public class Main {
             if (disasm) {
                 vax.disasm(System.out);
             } else {
-                vax.run(verbose);
+                vax.run(mode);
             }
         } catch (Exception ex) {
             ex.printStackTrace(System.err);
