@@ -784,6 +784,14 @@ class VAX {
                     System.err.println(getCallStack());
                 }
                 break;
+            case 0x11: // brb
+            case 0x31: // brw
+                s1 = fetch(size);
+                r[PC] += s1;
+                break;
+            case 0x17: // jmp
+                r[PC] = getOperand(4);
+                break;
             case 0x12: // bneq / bnequ
                 s1 = fetch(1);
                 if (!z) {
