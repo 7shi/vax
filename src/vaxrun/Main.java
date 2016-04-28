@@ -963,6 +963,22 @@ class VAX {
                 push(4, s1 = getOperand(4));
                 setNZVC(s1 < 0, s1 == 0, false, c);
                 break;
+            case 0x88: // bisb2
+            case 0xa8: // bisw2
+            case 0xc8: // bisl2
+                s1 = getOperand(size);
+                s2 = peekOperand(size);
+                d = setOperand(size, s1 | s2);
+                setNZVC(d < 0, d == 0, false, c);
+                break;
+            case 0x89: // bisb3
+            case 0xa9: // bisw3
+            case 0xc9: // bisl3
+                s1 = getOperand(size);
+                s2 = getOperand(size);
+                d = setOperand(size, s1 | s2);
+                setNZVC(d < 0, d == 0, false, c);
+                break;
             default:
                 throw error("%08x: unknown opcode %02x", r[PC] - 1, opcode);
         }
