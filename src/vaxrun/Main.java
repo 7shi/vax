@@ -926,6 +926,26 @@ class VAX {
                 d = setOperand(2, s1);
                 setNZVC(d < 0, d == 0, s1 != d, false);
                 break;
+            case 0x80: // addb2
+            case 0xa0: // addw2
+            case 0xc0: // addl2
+                s1 = getOperand(size);
+                s2 = peekOperand(size);
+                d = setOperand(size, s2 + s1);
+                setNZVC(d < 0, d == 0,
+                        (s1 < 0) == (s2 < 0) && (s2 < 0) != (d < 0),
+                        Integer.compareUnsigned(s2, d) > 0);
+                break;
+            case 0x81: // addb3
+            case 0xa1: // addw3
+            case 0xc1: // addl3
+                s1 = getOperand(size);
+                s2 = getOperand(size);
+                d = setOperand(size, s2 + s1);
+                setNZVC(d < 0, d == 0,
+                        (s1 < 0) == (s2 < 0) && (s2 < 0) != (d < 0),
+                        Integer.compareUnsigned(s2, d) > 0);
+                break;
             case 0x82: // subb2
             case 0xa2: // subw2
             case 0xc2: // subl2
