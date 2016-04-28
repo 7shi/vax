@@ -1002,6 +1002,16 @@ class VAX {
             case 4: // write
                 System.out.print(getString(buf.getInt(r[AP] + 8), buf.getInt(r[AP] + 12)));
                 return;
+            case 0x36: // ioctl
+            {
+                int fd = buf.getInt(r[AP] + 4);
+                switch (buf.getInt(r[AP] + 8)) {
+                    case 0x7408: // gtty
+                        r[0] = 0 <= fd && fd <= 2 ? 0 : -1;
+                        return;
+                }
+                break;
+            }
         }
         throw error("%08x: unknown syscall %02x", r[PC] - 1, sc);
     }
