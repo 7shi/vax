@@ -1022,7 +1022,7 @@ class VAX {
             case 0xc8: // bisl2
                 s1 = getOperand(size);
                 s2 = peekOperand(size);
-                d = setOperand(size, s1 | s2);
+                d = setOperand(size, s2 | s1);
                 setNZVC(d < 0, d == 0, false, c);
                 break;
             case 0x89: // bisb3
@@ -1030,7 +1030,7 @@ class VAX {
             case 0xc9: // bisl3
                 s1 = getOperand(size);
                 s2 = getOperand(size);
-                d = setOperand(size, s1 | s2);
+                d = setOperand(size, s2 | s1);
                 setNZVC(d < 0, d == 0, false, c);
                 break;
             case 0x8a: // bicb2
@@ -1038,7 +1038,7 @@ class VAX {
             case 0xca: // bicl2
                 s1 = getOperand(size);
                 s2 = peekOperand(size);
-                d = setOperand(size, ~s1 & s2);
+                d = setOperand(size, s2 & ~s1);
                 setNZVC(d < 0, d == 0, false, c);
                 break;
             case 0x8b: // bicb3
@@ -1046,7 +1046,7 @@ class VAX {
             case 0xcb: // bicl3
                 s1 = getOperand(size);
                 s2 = getOperand(size);
-                d = setOperand(size, ~s1 & s2);
+                d = setOperand(size, s2 & ~s1);
                 setNZVC(d < 0, d == 0, false, c);
                 break;
             case 0x93: // bitb
