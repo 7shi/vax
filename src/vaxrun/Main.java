@@ -665,13 +665,29 @@ class VAX {
         return sb.toString();
     }
 
-    public void pushCallStack() {
+    public void pushCallStack(boolean args) {
         String sym = aout.symT.getOrDefault(r[PC], "???");
         callStack.push(new AddrSym(r[PC], sym));
         if (mode >= 2) {
-            System.err.printf("%-139s %08x %s\n", getCallStack(), r[PC], dis.word(r[PC]));
+            String s = getCallStack();
+            if (args) {
+                s += "(" + getArgs() + ")";
+            }
+            System.err.printf("%-139s %08x %s\n", s, r[PC], dis.word(r[PC]));
         }
         r[PC] += 2;
+    }
+
+    public String getArgs() {
+        StringBuilder sb = new StringBuilder();
+        int argc = buf.getInt(r[AP]);
+        for (int i = 0; i < argc; ++i) {
+            if (i > 0) {
+                sb.append(", ");
+            }
+            sb.append(String.format("%08x", buf.getInt(r[AP] + 4 + i * 4)));
+        }
+        return sb.toString();
     }
 
     public void push(int size, int value) throws Exception {
@@ -692,7 +708,7 @@ class VAX {
             System.err.print("   r8       r9       r10      r11  -");
             System.err.println(" r12(ap)  r13(fp)  r14(sp) flag  r15(pc) disasm");
         }
-        pushCallStack();
+        pushCallStack(false);
         int pc = r[PC];
         try {
             for (;;) {
@@ -755,7 +771,7 @@ class VAX {
                 r[FP] = r[SP];
                 r[PC] = s2;
                 n = z = v = c = false;
-                pushCallStack();
+                pushCallStack(true);
                 break;
             case 0x04: // ret
                 r[SP] = r[FP] + 4;
@@ -1041,14 +1057,7 @@ class VAX {
         int sc = fetch();
         if (mode >= 1) {
             int argc = buf.getInt(r[AP]);
-            System.err.printf("[syscall] %s(", syscalls[sc]);
-            for (int i = 0; i < argc; ++i) {
-                if (i > 0) {
-                    System.err.print(", ");
-                }
-                System.err.printf("%08x", buf.getInt(r[AP] + 4 + i * 4));
-            }
-            System.err.println(")");
+            System.err.println("[syscall] " + syscalls[sc] + "(" + getArgs() + ")");
         }
         switch (sc) {
             case 1: // exit
