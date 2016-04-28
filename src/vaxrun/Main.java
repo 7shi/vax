@@ -1066,6 +1066,8 @@ class VAX {
             case 4: // write
                 System.out.print(getString(buf.getInt(r[AP] + 8), buf.getInt(r[AP] + 12)));
                 return;
+            case 6: // close
+                return;
             case 0x36: // ioctl
             {
                 int fd = buf.getInt(r[AP] + 4);
