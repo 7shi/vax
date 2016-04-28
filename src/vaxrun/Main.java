@@ -723,6 +723,67 @@ class VAX {
         int size = 1 << ((opcode & 0x7f) >> 5);
         int s1, s2, s3, d, tmp;
         switch (opcode) {
+            case 0xbc: // chmk
+                syscall();
+                break;
+            case 0xfb: // calls
+                s1 = Byte.toUnsignedInt(mem[r[PC]++]);
+                s2 = getAddress(4);
+                d = get(s2, 2); // entry mask
+                push(4, s1);
+                tmp = r[SP];
+                r[SP] &= ~3;
+                if ((d & 0xfff) != 0) {
+                    for (int i = 11, bit = 0x800; i >= 0; --i, bit >>= 1) {
+                        if ((d & bit) != 0) {
+                            push(4, r[i]);
+                        }
+                    }
+                }
+                push(4, r[PC]);
+                push(4, r[FP]);
+                push(4, r[AP]);
+                push(4, ((tmp & 3) << 30)
+                        | 0x2000
+                        | ((d & 0xfff) << 16)
+                        | (n ? 8 : 0)
+                        | (z ? 4 : 0)
+                        | (v ? 2 : 0)
+                        | (c ? 1 : 0));
+                push(4, 0); // handler
+                r[AP] = tmp;
+                r[FP] = r[SP];
+                r[PC] = s2;
+                n = z = v = c = false;
+                pushCallStack();
+                break;
+            case 0x04: // ret
+                r[SP] = r[FP] + 4;
+                tmp = pop(4);
+                n = (tmp & 8) != 0;
+                z = (tmp & 4) != 0;
+                v = (tmp & 2) != 0;
+                c = (tmp & 1) != 0;
+                r[AP] = pop(4);
+                r[FP] = pop(4);
+                r[PC] = pop(4);
+                if ((tmp & 0xfff0000) != 0) {
+                    for (int i = 0, bit = 0x10000; i <= 11; ++i, bit <<= 1) {
+                        if ((tmp & bit) != 0) {
+                            r[i] = pop(4);
+                        }
+                    }
+                }
+                r[SP] += (tmp >> 30) & 3;
+                if ((tmp & 0x2000) != 0) { // calls
+                    s1 = pop(4); // argc
+                    r[SP] += s1 * 4;
+                }
+                callStack.pop();
+                if (mode >= 2) {
+                    System.err.println(getCallStack());
+                }
+                break;
             case 0x12: // bneq / bnequ
                 s1 = fetch(1);
                 if (!z) {
@@ -901,67 +962,6 @@ class VAX {
             case 0xdd: // pushl
                 push(4, s1 = getOperand(4));
                 setNZVC(s1 < 0, s1 == 0, false, c);
-                break;
-            case 0xbc: // chmk
-                syscall();
-                break;
-            case 0xfb: // calls
-                s1 = Byte.toUnsignedInt(mem[r[PC]++]);
-                s2 = getAddress(4);
-                d = get(s2, 2); // entry mask
-                push(4, s1);
-                tmp = r[SP];
-                r[SP] &= ~3;
-                if ((d & 0xfff) != 0) {
-                    for (int i = 11, bit = 0x800; i >= 0; --i, bit >>= 1) {
-                        if ((d & bit) != 0) {
-                            push(4, r[i]);
-                        }
-                    }
-                }
-                push(4, r[PC]);
-                push(4, r[FP]);
-                push(4, r[AP]);
-                push(4, ((tmp & 3) << 30)
-                        | 0x2000
-                        | ((d & 0xfff) << 16)
-                        | (n ? 8 : 0)
-                        | (z ? 4 : 0)
-                        | (v ? 2 : 0)
-                        | (c ? 1 : 0));
-                push(4, 0); // handler
-                r[AP] = tmp;
-                r[FP] = r[SP];
-                r[PC] = s2;
-                n = z = v = c = false;
-                pushCallStack();
-                break;
-            case 0x04: // ret
-                r[SP] = r[FP] + 4;
-                tmp = pop(4);
-                n = (tmp & 8) != 0;
-                z = (tmp & 4) != 0;
-                v = (tmp & 2) != 0;
-                c = (tmp & 1) != 0;
-                r[AP] = pop(4);
-                r[FP] = pop(4);
-                r[PC] = pop(4);
-                if ((tmp & 0xfff0000) != 0) {
-                    for (int i = 0, bit = 0x10000; i <= 11; ++i, bit <<= 1) {
-                        if ((tmp & bit) != 0) {
-                            r[i] = pop(4);
-                        }
-                    }
-                }
-                r[SP] += (tmp >> 30) & 3;
-                if ((tmp & 0x2000) != 0) { // calls
-                    s1 = pop(4); // argc
-                    r[SP] += s1 * 4;
-                }
-                callStack.pop();
-                if (mode >= 2) {
-                    System.err.println(getCallStack());
-                }
                 break;
             default:
                 throw error("%08x: unknown opcode %02x", r[PC] - 1, opcode);
