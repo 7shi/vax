@@ -936,6 +936,16 @@ class VAX {
                         (s1 < 0) != (s2 < 0) && (s2 < 0) != (d < 0),
                         Integer.compareUnsigned(s2, d) < 0);
                 break;
+            case 0x83: // subb3
+            case 0xa3: // subw3
+            case 0xc3: // subl3
+                s1 = getOperand(size);
+                s2 = getOperand(size);
+                d = setOperand(size, s2 - s1);
+                setNZVC(d < 0, d == 0,
+                        (s1 < 0) != (s2 < 0) && (s2 < 0) != (d < 0),
+                        Integer.compareUnsigned(s2, d) < 0);
+                break;
             case 0x90: // movb
             case 0xb0: // movw
             case 0xd0: // movl
