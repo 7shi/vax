@@ -987,6 +987,14 @@ class VAX {
                 d = setOperand(size, s1 | s2);
                 setNZVC(d < 0, d == 0, false, c);
                 break;
+            case 0x93: // bitb
+            case 0xb3: // bitw
+            case 0xd3: // bitl
+                s1 = getOperand(size);
+                s2 = getOperand(size);
+                tmp = s1 & s2;
+                setNZVC(tmp < 0, tmp == 0, false, c);
+                break;
             case 0x8e: // mnegb
             case 0xae: // mnegw
             case 0xce: // mnegl
