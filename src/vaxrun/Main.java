@@ -987,6 +987,13 @@ class VAX {
                 d = setOperand(size, s1 | s2);
                 setNZVC(d < 0, d == 0, false, c);
                 break;
+            case 0x8e: // mnegb
+            case 0xae: // mnegw
+            case 0xce: // mnegl
+                s1 = getOperand(size);
+                d = setOperand(size, -s1);
+                setNZVC(d < 0, d == 0, s1 == d, d != 0);
+                break;
             default:
                 throw error("%08x: unknown opcode %02x", r[PC] - 1, opcode);
         }
