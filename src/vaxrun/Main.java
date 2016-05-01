@@ -910,6 +910,24 @@ class VAX {
                     r[PC] += s2;
                 }
                 break;
+            case 0xf4: // sobgeq
+                s1 = peekOperand(4);
+                d = setOperand(4, s1 - 1);
+                setNZVC(d < 0, d == 0, s1 < 0 && d >= 0, c);
+                s2 = fetch(1);
+                if (d >= 0) {
+                    r[PC] += s2;
+                }
+                break;
+            case 0xf5: // sobgtr
+                s1 = peekOperand(4);
+                d = setOperand(4, s1 - 1);
+                setNZVC(d < 0, d == 0, s1 < 0 && d >= 0, c);
+                s2 = fetch(1);
+                if (d > 0) {
+                    r[PC] += s2;
+                }
+                break;
             case 0x99: // cvtbw
                 s1 = getOperand(1);
                 d = setOperand(2, s1);
