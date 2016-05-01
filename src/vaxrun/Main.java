@@ -896,6 +896,20 @@ class VAX {
                     r[PC] += s3;
                 }
                 break;
+            case 0xe8: // blbs
+                s1 = getOperand(4);
+                s2 = fetch(1);
+                if ((s1 & 1) != 0) {
+                    r[PC] += s2;
+                }
+                break;
+            case 0xe9: // blbc
+                s1 = getOperand(4);
+                s2 = fetch(1);
+                if ((s1 & 1) == 0) {
+                    r[PC] += s2;
+                }
+                break;
             case 0x99: // cvtbw
                 s1 = getOperand(1);
                 d = setOperand(2, s1);
