@@ -617,10 +617,12 @@ class VAX {
     }
 
     public int setOperand(int size, int value) throws Exception {
-        int b = fetch();
-        int rn = b & 15, disp, ret;
+        int b = Byte.toUnsignedInt(mem[r[PC]]);
         switch (b >> 4) {
             case 5: // r
+            {
+                ++r[PC];
+                int rn = b & 15;
                 switch (size) {
                     case 1:
                         return r[rn] = (byte) value;
@@ -633,25 +635,9 @@ class VAX {
                         return r[rn] = value;
                 }
                 break;
-            case 6: // (r)
-                return set(r[rn], size, value);
-            case 7: // -(r)
-                return set(r[rn] -= size, size, value);
-            case 8: // (r)+
-                ret = set(r[rn], size, value);
-                r[rn] += size;
-                return ret;
-            case 0xa: // b(r)
-                disp = fetch(1);
-                return set(r[rn] + disp, size, value);
-            case 0xb: // *b(r)
-                disp = fetch(1);
-                return set(get(r[rn] + disp, 4), size, value);
-            case 0xe: // l(r)
-                disp = fetch(4);
-                return set(r[rn] + disp, size, value);
+            }
         }
-        throw error("%08x: unknown operand %02x", r[PC] - 1, b);
+        return set(getAddress(size), size, value);
     }
 
     public void debug() {
