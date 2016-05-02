@@ -621,7 +621,18 @@ class VAX {
         int rn = b & 15, disp, ret;
         switch (b >> 4) {
             case 5: // r
-                return r[rn] = size == 1 ? (byte) value : size == 2 ? (short) value : value;
+                switch (size) {
+                    case 1:
+                        return r[rn] = (byte) value;
+                    case 2:
+                        return r[rn] = (short) value;
+                    case 4:
+                        return r[rn] = value;
+                    case 8:
+                        r[rn + 1] = value < 0 ? -1 : 0;
+                        return r[rn] = value;
+                }
+                break;
             case 6: // (r)
                 return set(r[rn], size, value);
             case 7: // -(r)
