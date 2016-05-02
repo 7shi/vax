@@ -1028,6 +1028,7 @@ class VAX {
             case 0x94: // clrb
             case 0xb4: // clrw
             case 0xd4: // clrl / clrf
+            case 0x7c: // clrq / clrd
                 setOperand(size, 0);
                 setNZVC(false, true, false, c);
                 break;
