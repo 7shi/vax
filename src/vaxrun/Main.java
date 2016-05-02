@@ -984,6 +984,25 @@ class VAX {
                 setOperand(4, Short.toUnsignedInt((short) s1));
                 setNZVC(false, s1 == 0, false, c);
                 break;
+            case 0xee: // extv
+                s1 = getOperand(4);
+                s2 = getOperand(1);
+                s3 = getOperand(1);
+                tmp = s3 & (((1 << s2) - 1) << s1);
+                if ((tmp & (1 << (s1 + s2 - 1))) != 0) {
+                    tmp |= ~((1 << (s1 + s2)) - 1);
+                }
+                d = setOperand(4, tmp);
+                setNZVC(d < 0, d == 0, false, false);
+                break;
+            case 0xef: // extzv
+                s1 = getOperand(4);
+                s2 = getOperand(1);
+                s3 = getOperand(1);
+                tmp = s3 & (((1 << s2) - 1) << s1);
+                d = setOperand(4, tmp);
+                setNZVC(d < 0, d == 0, false, false);
+                break;
             case 0x80: // addb2
             case 0xa0: // addw2
             case 0xc0: // addl2
