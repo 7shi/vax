@@ -407,8 +407,7 @@ class AOut {
                             }
                         }
                     }
-                    syms = new Symbol[list.size()];
-                    list.toArray(syms);
+                    syms = list.toArray(new Symbol[list.size()]);
                 } else {
                     syms = null;
                 }
