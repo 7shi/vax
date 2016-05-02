@@ -590,6 +590,30 @@ class VAX {
         return get(getAddress(size), size);
     }
 
+    public int setOperand(int size, int value) throws Exception {
+        int b = Byte.toUnsignedInt(mem[r[PC]]);
+        switch (b >> 4) {
+            case 5: // r
+            {
+                ++r[PC];
+                int rn = b & 15;
+                switch (size) {
+                    case 1:
+                        return r[rn] = (byte) value;
+                    case 2:
+                        return r[rn] = (short) value;
+                    case 4:
+                        return r[rn] = value;
+                    case 8:
+                        r[rn + 1] = value < 0 ? -1 : 0;
+                        return r[rn] = value;
+                }
+                break;
+            }
+        }
+        return set(getAddress(size), size, value);
+    }
+
     public int getAddress(int size) throws Exception {
         int pc = r[PC];
         int b = fetch();
@@ -614,30 +638,6 @@ class VAX {
                 return r[rn] + disp;
         }
         throw error("%08x: not addr %02x", pc, b);
-    }
-
-    public int setOperand(int size, int value) throws Exception {
-        int b = Byte.toUnsignedInt(mem[r[PC]]);
-        switch (b >> 4) {
-            case 5: // r
-            {
-                ++r[PC];
-                int rn = b & 15;
-                switch (size) {
-                    case 1:
-                        return r[rn] = (byte) value;
-                    case 2:
-                        return r[rn] = (short) value;
-                    case 4:
-                        return r[rn] = value;
-                    case 8:
-                        r[rn + 1] = value < 0 ? -1 : 0;
-                        return r[rn] = value;
-                }
-                break;
-            }
-        }
-        return set(getAddress(size), size, value);
     }
 
     public void debug() {
