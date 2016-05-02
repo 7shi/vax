@@ -969,6 +969,21 @@ class VAX {
                 d = setOperand(2, s1);
                 setNZVC(d < 0, d == 0, s1 != d, false);
                 break;
+            case 0x9a: // movzbl
+                s1 = getOperand(1);
+                setOperand(4, Byte.toUnsignedInt((byte) s1));
+                setNZVC(false, s1 == 0, false, c);
+                break;
+            case 0x9b: // movzbw
+                s1 = getOperand(1);
+                setOperand(2, Byte.toUnsignedInt((byte) s1));
+                setNZVC(false, s1 == 0, false, c);
+                break;
+            case 0x3c: // movzwl
+                s1 = getOperand(2);
+                setOperand(4, Short.toUnsignedInt((short) s1));
+                setNZVC(false, s1 == 0, false, c);
+                break;
             case 0x80: // addb2
             case 0xa0: // addw2
             case 0xc0: // addl2
