@@ -1073,15 +1073,15 @@ class VAX {
                 Arrays.fill(mem, s3, s3 + s2, (byte) 0);
                 d = s3 + s2 - 1;
                 mem[d] = (byte) (s1 < 0 ? 13 : 12);
-                long value = Math.abs((long) s1);
+                tmp = Math.abs(s1);
                 boolean h = true;
-                while (value > 0) {
-                    byte b = (byte) (value % 10);
-                    value /= 10;
+                while (tmp > 0) {
+                    byte b = (byte) (Integer.remainderUnsigned(tmp, 10));
+                    tmp = Integer.divideUnsigned(tmp, 10);
                     if (h) {
                         mem[d] |= b << 4;
                         if (d == s3) {
-                            v = value > 0;
+                            v = tmp > 0;
                             break;
                         }
                         --d;
