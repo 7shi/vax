@@ -1018,6 +1018,22 @@ class VAX {
                     r[PC] += s2;
                 }
                 break;
+            case 0x8f: // caseb
+            case 0xaf: // casew
+            case 0xcf: // casel
+                s1 = getOperand(size);
+                s2 = getOperand(size);
+                s3 = getOperand(size);
+                tmp = s1 - s2;
+                if (0 <= tmp && tmp <= s3) {
+                    r[PC] += get(r[PC] + (tmp << 1), 2);
+                } else {
+                    r[PC] += (s3 + 1) << 1;
+                }
+                d = tmp - s3;
+                setNZVC(d < 0, d == 0, false,
+                        Integer.compareUnsigned(tmp, d) < 0);
+                break;
             case 0x99: // cvtbw
                 s1 = getOperand(1);
                 d = setOperand(2, s1);
