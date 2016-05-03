@@ -266,10 +266,27 @@ class VAXDisasm {
         out.println();
     }
 
+    public void addAddress(int ad) {
+        if (addrs == null || ad <= pc) {
+            return;
+        }
+        Symbol sym = new Symbol(ad);
+        int i = 0;
+        for (Symbol s : addrs) {
+            if (s.value > ad) {
+                addrs.add(i, sym);
+                return;
+            }
+            ++i;
+        }
+        addrs.add(sym);
+    }
+
     public String getOperand(VAXType t) {
         if (t == VAXType.RELB || t == VAXType.RELW) {
-            int rel = fetch(t.size);
-            return String.format("0x%x", pc + rel);
+            int rel = fetch(t.size), ad = pc + rel;
+            addAddress(ad);
+            return String.format("0x%x", ad);
         }
         int b = fetch(), b1 = b >> 4, b2 = b & 15;
         String r = regs[b2];
@@ -342,7 +359,7 @@ class VAXDisasm {
                 Symbol s = addrs.remove();
                 if (s.isObject()) {
                     System.out.printf("[%s]\n", s.name);
-                } else {
+                } else if (!s.isNull()) {
                     System.out.printf("%s:\n", s.name);
                     if (asm == null) {
                         asm = word();
@@ -379,6 +396,7 @@ class VAXDisasm {
     }
 
     public String address(int ad) {
+        addAddress(ad);
         String ret = String.format("0x%x", ad);
         if (aout != null && aout.symT.containsKey(ad)) {
             ret += "<" + aout.symT.get(ad) + ">";
