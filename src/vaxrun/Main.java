@@ -1093,11 +1093,11 @@ class VAX {
                 r[0] = r[1] = r[2] = 0;
                 r[3] = d;
                 if (mode >= 2) {
-                    ArrayList<String> bs = new ArrayList<>();
+                    StringBuilder sb = new StringBuilder();
                     for (int i = 0; i < s2; ++i) {
-                        bs.add(String.format("0x%02x", Byte.toUnsignedInt(mem[s3 + i])));
+                        sb.append(String.format(" %02x", Byte.toUnsignedInt(mem[s3 + i])));
                     }
-                    System.err.printf("[cvtlp %d:%08x] %s\n", s1, s3, String.join(", ", bs));
+                    System.err.printf("[cvtlp %d:%08x]%s\n", s1, s3, sb.toString());
                 }
                 break;
             }
