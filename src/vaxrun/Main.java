@@ -352,8 +352,21 @@ class VAXDisasm {
             if (asm == null) {
                 asm = oldpc == aout.a_entry ? word() : disasm1(pc);
             }
+            if (!addrs.isEmpty() && addrs.peek().value < pc) {
+                Symbol s = addrs.peek();
+                pc = oldpc;
+                asm = bytes(s.value - pc);
+            }
             output(out, oldpc, pc - oldpc, asm);
         }
+    }
+
+    public String bytes(int len) {
+        ArrayList<String> bs = new ArrayList<>();
+        for (int i = 0; i < len; ++i) {
+            bs.add(String.format("0x%02x", fetch()));
+        }
+        return ".byte " + String.join(", ", bs);
     }
 
     public String word() {
