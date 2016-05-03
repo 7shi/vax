@@ -1064,6 +1064,43 @@ class VAX {
                 d = setOperand(2, s1);
                 setNZVC(d < 0, d == 0, s1 != d, false);
                 break;
+            case 0xf9: // cvtlp
+            {
+                s1 = getOperand(4);
+                s2 = getOperand(2);
+                s3 = getAddress(1);
+                setNZVC(s1 < 0, s1 == 0, false, false);
+                Arrays.fill(mem, s3, s3 + s2, (byte) 0);
+                d = s3 + s2 - 1;
+                mem[d] = (byte) (s1 < 0 ? 13 : 12);
+                long value = Math.abs((long) s1);
+                boolean h = true;
+                while (value > 0) {
+                    byte b = (byte) (value % 10);
+                    value /= 10;
+                    if (h) {
+                        mem[d] |= b << 4;
+                        if (d == s3) {
+                            v = value > 0;
+                            break;
+                        }
+                        --d;
+                    } else {
+                        mem[d] = b;
+                    }
+                    h = !h;
+                }
+                r[0] = r[1] = r[2] = 0;
+                r[3] = d;
+                if (mode >= 2) {
+                    ArrayList<String> bs = new ArrayList<>();
+                    for (int i = 0; i < s2; ++i) {
+                        bs.add(String.format("0x%02x", Byte.toUnsignedInt(mem[s3 + i])));
+                    }
+                    System.err.printf("[cvtlp %d:%08x] %s\n", s1, s3, String.join(", ", bs));
+                }
+                break;
+            }
             case 0x9a: // movzbl
                 s1 = getOperand(1);
                 setOperand(4, Byte.toUnsignedInt((byte) s1));
