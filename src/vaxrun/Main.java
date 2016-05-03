@@ -167,6 +167,10 @@ class Symbol {
     public String toString() {
         return String.format("%08x %c %s", value, tchar, name);
     }
+
+    public boolean isObject() {
+        return name.endsWith(".o");
+    }
 }
 
 class VAXDisasm {
@@ -400,7 +404,7 @@ class AOut {
                         Symbol s = new Symbol(sbuf, p);
                         list.add(s);
                         if (4 <= s.type && s.type <= 9) {
-                            if (s.name.endsWith(".o")) {
+                            if (s.isObject()) {
                                 symO.put(s.value, s.name);
                             } else {
                                 symT.put(s.value, s.name);
