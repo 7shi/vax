@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Stack;
 
 enum VAXType {
@@ -315,24 +316,28 @@ class VAXDisasm {
     }
 
     public void disasm(PrintStream out, int start, int end) {
+        LinkedList<Symbol> syms = aout != null
+                ? aout.getAddresses() : new LinkedList<>();
         pc = start;
         while (pc < end) {
+            while (!syms.isEmpty() && syms.peek().value < pc) {
+                syms.remove();
+            }
             int oldpc = pc;
             String asm = null;
-            if (aout != null) {
-                String o = aout.symO.get(oldpc);
-                if (o != null) {
-                    System.out.printf("[%s]\n", o);
-                }
-                if (aout.symT.containsKey(oldpc)) {
-                    System.out.printf("%s:\n", aout.symT.get(oldpc));
-                    asm = word();
-                } else if (oldpc == aout.a_entry) {
-                    asm = word();
+            while (!syms.isEmpty() && syms.peek().value == oldpc) {
+                Symbol s = syms.remove();
+                if (s.isObject()) {
+                    System.out.printf("[%s]\n", s.name);
+                } else {
+                    System.out.printf("%s:\n", s.name);
+                    if (asm == null) {
+                        asm = word();
+                    }
                 }
             }
             if (asm == null) {
-                asm = disasm1(pc);
+                asm = oldpc == aout.a_entry ? word() : disasm1(pc);
             }
             output(out, oldpc, pc - oldpc, asm);
         }
@@ -374,6 +379,7 @@ class AOut {
     public final Symbol[] syms;
     public final HashMap<Integer, String> symO = new HashMap<>();
     public final HashMap<Integer, String> symT = new HashMap<>();
+    private final Symbol[] addrs;
 
     public AOut(String path) throws IOException {
         try (FileInputStream fis = new FileInputStream(path)) {
@@ -400,6 +406,7 @@ class AOut {
                     fis.read(sym);
                     ByteBuffer sbuf = ByteBuffer.wrap(sym).order(ByteOrder.LITTLE_ENDIAN);
                     ArrayList<Symbol> list = new ArrayList<>();
+                    ArrayList<Symbol> ads = new ArrayList<>();
                     for (int p = 0; p <= a_syms - 16; p += 16) {
                         Symbol s = new Symbol(sbuf, p);
                         list.add(s);
@@ -409,11 +416,23 @@ class AOut {
                             } else {
                                 symT.put(s.value, s.name);
                             }
+                            ads.add(s);
                         }
                     }
                     syms = list.toArray(new Symbol[list.size()]);
+                    ads.sort((a, b) -> {
+                        int ret = a.value - b.value;
+                        if (ret == 0) {
+                            int ao = a.isObject() ? 0 : 1;
+                            int bo = b.isObject() ? 0 : 1;
+                            return ao - bo;
+                        }
+                        return ret;
+                    });
+                    addrs = ads.toArray(new Symbol[ads.size()]);
                 } else {
                     syms = null;
+                    addrs = new Symbol[0];
                 }
                 return;
             }
@@ -423,6 +442,7 @@ class AOut {
         text = java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(path));
         data = null;
         syms = null;
+        addrs = new Symbol[0];
     }
 
     @Override
@@ -435,6 +455,10 @@ class AOut {
                 + "syms  = %08x, entry = %08x, trsize = %08x, drsize = %08x",
                 a_magic, a_text, a_data, a_bss,
                 a_syms, a_entry, a_trsize, a_drsize);
+    }
+
+    public LinkedList<Symbol> getAddresses() {
+        return new LinkedList<>(Arrays.asList(addrs));
     }
 }
 
