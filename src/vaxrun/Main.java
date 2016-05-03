@@ -147,6 +147,12 @@ class Symbol {
     public final int type, other, desc, value;
     public final char tchar;
 
+    public Symbol(int addr) {
+        name = null;
+        value = addr;
+        type = other = desc = tchar = 0;
+    }
+
     public Symbol(ByteBuffer buf, int p) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < 8; ++i) {
@@ -166,11 +172,18 @@ class Symbol {
 
     @Override
     public String toString() {
+        if (isNull()) {
+            return String.format("%08x", value);
+        }
         return String.format("%08x %c %s", value, tchar, name);
     }
 
     public boolean isObject() {
-        return name.endsWith(".o");
+        return name != null && name.endsWith(".o");
+    }
+
+    public boolean isNull() {
+        return name == null;
     }
 }
 
