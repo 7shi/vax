@@ -196,7 +196,7 @@ class VAXDisasm {
 
     private final ByteBuffer buf;
     private final AOut aout;
-    private int pc, offset;
+    private int pc, offset, casead, casec;
     private LinkedList<Symbol> addrs;
 
     public VAXDisasm(ByteBuffer buf, AOut aout) {
@@ -341,33 +341,53 @@ class VAXDisasm {
         StringBuilder sb = new StringBuilder(op.mne);
         for (int i = 0; i < op.oprs.length; ++i) {
             sb.append(i == 0 ? " " : ",");
-            sb.append(getOperand(VAXType.table[op.oprs[i]]));
+            String opr = getOperand(VAXType.table[op.oprs[i]]);
+            switch (op) {
+                case CASEB:
+                case CASEW:
+                case CASEL:
+                    if (i == op.oprs.length - 1) {
+                        casead = pc;
+                        if (opr.startsWith("$0x")) {
+                            casec = Integer.parseInt(opr.substring(3), 16) + 1;
+                        } else if (opr.startsWith("$")) {
+                            casec = Integer.parseInt(opr.substring(1)) + 1;
+                        }
+                    }
+                    break;
+            }
+            sb.append(opr);
         }
         return sb.toString();
     }
 
     public void disasm(PrintStream out, int start, int end) {
         addrs = aout != null ? aout.getAddresses() : new LinkedList<>();
+        casec = 0;
         pc = start;
         while (pc < end) {
             while (!addrs.isEmpty() && addrs.peek().value < pc) {
                 addrs.remove();
             }
-            int oldpc = pc;
-            String asm = null;
-            while (!addrs.isEmpty() && addrs.peek().value == oldpc) {
+            boolean w = pc == aout.a_entry;
+            while (!addrs.isEmpty() && addrs.peek().value == pc) {
                 Symbol s = addrs.remove();
                 if (s.isObject()) {
                     System.out.printf("[%s]\n", s.name);
                 } else if (!s.isNull()) {
                     System.out.printf("%s:\n", s.name);
-                    if (asm == null) {
-                        asm = word();
-                    }
+                    w = true;
                 }
             }
-            if (asm == null) {
-                asm = oldpc == aout.a_entry ? word() : disasm1(pc);
+            int oldpc = pc;
+            String asm;
+            if (casec > 0) {
+                int ad = casead + fetch(2);
+                addAddress(ad);
+                asm = String.format(".word 0x%x-0x%x", ad, casead);
+                --casec;
+            } else {
+                asm = w ? word() : disasm1(pc);
             }
             if (!addrs.isEmpty() && addrs.peek().value < pc) {
                 Symbol s = addrs.peek();
