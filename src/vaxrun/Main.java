@@ -197,6 +197,7 @@ class VAXDisasm {
     private final ByteBuffer buf;
     private final AOut aout;
     private int pc, offset;
+    private LinkedList<Symbol> addrs;
 
     public VAXDisasm(ByteBuffer buf, AOut aout) {
         this.buf = buf;
@@ -329,17 +330,16 @@ class VAXDisasm {
     }
 
     public void disasm(PrintStream out, int start, int end) {
-        LinkedList<Symbol> syms = aout != null
-                ? aout.getAddresses() : new LinkedList<>();
+        addrs = aout != null ? aout.getAddresses() : new LinkedList<>();
         pc = start;
         while (pc < end) {
-            while (!syms.isEmpty() && syms.peek().value < pc) {
-                syms.remove();
+            while (!addrs.isEmpty() && addrs.peek().value < pc) {
+                addrs.remove();
             }
             int oldpc = pc;
             String asm = null;
-            while (!syms.isEmpty() && syms.peek().value == oldpc) {
-                Symbol s = syms.remove();
+            while (!addrs.isEmpty() && addrs.peek().value == oldpc) {
+                Symbol s = addrs.remove();
                 if (s.isObject()) {
                     System.out.printf("[%s]\n", s.name);
                 } else {
