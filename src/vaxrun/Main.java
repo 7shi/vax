@@ -1074,12 +1074,12 @@ class VAX {
                 Arrays.fill(mem, s3, d, (byte) 0);
                 mem[d] = (byte) (s1 < 0 ? 13 : 12);
                 tmp = Math.abs(s1);
-                for (int i = 1; i <= s2 && tmp > 0; ++i) {
+                for (int i = 0; i < s2 && tmp > 0; ++i) {
                     byte b = (byte) (Integer.remainderUnsigned(tmp, 10));
                     if ((i & 1) == 0) {
-                        mem[--d] = b;
-                    } else {
                         mem[d] |= b << 4;
+                    } else {
+                        mem[--d] = b;
                     }
                     tmp = Integer.divideUnsigned(tmp, 10);
                 }
