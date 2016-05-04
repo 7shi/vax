@@ -852,8 +852,98 @@ class VAX {
         }
     }
 
+    private void editpcDebug(String cmd) {
+        if (mode < 2) {
+            return;
+        }
+        System.err.printf("[editpc] r0=%08x r1=%08x r2=%08x r4=%08x r5=%08x %c%c%c%c r3=%08x %s\n",
+                r[0], r[1], r[2], r[4], r[5],
+                n ? 'N' : '-', z ? 'Z' : '-', v ? 'V' : '-', c ? 'C' : '-',
+                r[3], cmd);
+    }
+
+    private int editpcRead() throws Exception {
+        if (r[0] == 0) {
+            throw error("editpc: source is too short");
+        }
+        if (r[0] < 0) {
+            r[0] += 0x10000;
+            return 0;
+        }
+        if (((r[0]--) & 1) == 1) {
+            return (mem[r[1]] >> 4) & 0xf;
+        }
+        return mem[r[1]++] & 0xf;
+    }
+
     public void editpc(int srclen, int srcaddr, int pattern, int dstaddr) throws Exception {
-        throw error("editpc 0x%x,0x%x,0x%x,0x%x", srclen, srcaddr, pattern, dstaddr);
+        int s = mem[srcaddr + (srclen >> 1)] & 0xf;
+        setNZVC(s == 0xb || s == 0xd, true, false, false);
+        r[0] = srclen;
+        r[1] = srcaddr;
+        r[2] = (n ? '-' : ' ') << 8 | ' ';
+        r[3] = pattern;
+        r[4] = 0;
+        r[5] = dstaddr;
+        OUTER:
+        for (;; r[3]++) {
+            int b = Byte.toUnsignedInt(mem[r[3]]);
+            switch (b) {
+                case 0:
+                    editpcDebug("eo$end");
+                    break OUTER;
+                case 1:
+                    editpcDebug("eo$end_float");
+                    if (!c) {
+                        c = true;
+                        r[4] = r[1];
+                        mem[r[5]++] = (byte) ((r[2] >> 8) & 0xff);
+                    }
+                    continue;
+            }
+            int rep = b & 15;
+            switch (b >> 4) {
+                case 0x9:
+                    editpcDebug("eo$move " + rep);
+                    for (int i = 0; i < rep; ++i) {
+                        int oldr1 = r[1], num = editpcRead();
+                        if (num != 0 && !c) {
+                            z = false;
+                            c = true;
+                            r[4] = oldr1;
+                        }
+                        mem[r[5]++] = (byte) (c ? '0' + num : r[2] & 0xff);
+                    }
+                    break;
+                case 0xa:
+                    editpcDebug("eo$float " + rep);
+                    for (int i = 0; i < rep; ++i) {
+                        int oldr1 = r[1], num = editpcRead();
+                        if (num != 0 && !c) {
+                            z = false;
+                            c = true;
+                            r[4] = oldr1;
+                            mem[r[5]++] = (byte) ((r[2] >> 8) & 0xff);
+                        }
+                        mem[r[5]++] = (byte) (c ? '0' + num : r[2] & 0xff);
+                    }
+                    break;
+                default:
+                    editpcDebug(String.format("?%02x", b));
+            }
+        }
+        if (z) {
+            n = false;
+        }
+        v = r[0] != 0;
+        r[0] = srclen;
+        r[1] = r[4];
+        r[2] = 0;
+        r[4] = 0;
+        if (mode >= 2) {
+            String dststr = getString(dstaddr, r[5] - dstaddr);
+            System.err.printf("[editpc:%08x] \"%s\"\n", dstaddr, dststr);
+        }
     }
 
     public void step() throws Exception {
