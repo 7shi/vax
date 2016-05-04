@@ -1069,32 +1069,26 @@ class VAX {
                 s1 = getOperand(4);
                 s2 = getOperand(2);
                 s3 = getAddress(1);
-                setNZVC(s1 < 0, s1 == 0, false, false);
-                Arrays.fill(mem, s3, s3 + s2, (byte) 0);
-                d = s3 + s2 - 1;
+                int len = (s2 >> 1) + 1;
+                d = s3 + len - 1;
+                Arrays.fill(mem, s3, d, (byte) 0);
                 mem[d] = (byte) (s1 < 0 ? 13 : 12);
                 tmp = Math.abs(s1);
-                boolean h = true;
-                while (tmp > 0) {
+                for (int i = 1; i <= s2 && tmp > 0; ++i) {
                     byte b = (byte) (Integer.remainderUnsigned(tmp, 10));
-                    tmp = Integer.divideUnsigned(tmp, 10);
-                    if (h) {
-                        mem[d] |= b << 4;
-                        if (d == s3) {
-                            v = tmp > 0;
-                            break;
-                        }
-                        --d;
+                    if ((i & 1) == 0) {
+                        mem[--d] = b;
                     } else {
-                        mem[d] = b;
+                        mem[d] |= b << 4;
                     }
-                    h = !h;
+                    tmp = Integer.divideUnsigned(tmp, 10);
                 }
                 r[0] = r[1] = r[2] = 0;
                 r[3] = d;
+                setNZVC(s1 < 0, s1 == 0, tmp > 0, false);
                 if (mode >= 2) {
                     StringBuilder sb = new StringBuilder();
-                    for (int i = 0; i < s2; ++i) {
+                    for (int i = 0; i < len; ++i) {
                         sb.append(String.format(" %02x", Byte.toUnsignedInt(mem[s3 + i])));
                     }
                     System.err.printf("[cvtlp %d:%08x]%s\n", s1, s3, sb.toString());
