@@ -1211,18 +1211,11 @@ class VAX {
             case 0x80: // addb2
             case 0xa0: // addw2
             case 0xc0: // addl2
-                s1 = getOperand(size);
-                s2 = peekOperand(size);
-                d = setOperand(size, s2 + s1);
-                setNZVC(d < 0, d == 0,
-                        (s1 < 0) == (s2 < 0) && (s2 < 0) != (d < 0),
-                        Integer.compareUnsigned(s2, d) > 0);
-                break;
             case 0x81: // addb3
             case 0xa1: // addw3
             case 0xc1: // addl3
                 s1 = getOperand(size);
-                s2 = getOperand(size);
+                s2 = (opcode & 1) == 0 ? peekOperand(size) : getOperand(size);
                 d = setOperand(size, s2 + s1);
                 setNZVC(d < 0, d == 0,
                         (s1 < 0) == (s2 < 0) && (s2 < 0) != (d < 0),
@@ -1231,18 +1224,11 @@ class VAX {
             case 0x82: // subb2
             case 0xa2: // subw2
             case 0xc2: // subl2
-                s1 = getOperand(size);
-                s2 = peekOperand(size);
-                d = setOperand(size, s2 - s1);
-                setNZVC(d < 0, d == 0,
-                        (s1 < 0) != (s2 < 0) && (s2 < 0) != (d < 0),
-                        Integer.compareUnsigned(s2, d) < 0);
-                break;
             case 0x83: // subb3
             case 0xa3: // subw3
             case 0xc3: // subl3
                 s1 = getOperand(size);
-                s2 = getOperand(size);
+                s2 = (opcode & 1) == 0 ? peekOperand(size) : getOperand(size);
                 d = setOperand(size, s2 - s1);
                 setNZVC(d < 0, d == 0,
                         (s1 < 0) != (s2 < 0) && (s2 < 0) != (d < 0),
@@ -1310,32 +1296,22 @@ class VAX {
             case 0x88: // bisb2
             case 0xa8: // bisw2
             case 0xc8: // bisl2
-                s1 = getOperand(size);
-                s2 = peekOperand(size);
-                d = setOperand(size, s2 | s1);
-                setNZVC(d < 0, d == 0, false, c);
-                break;
             case 0x89: // bisb3
             case 0xa9: // bisw3
             case 0xc9: // bisl3
                 s1 = getOperand(size);
-                s2 = getOperand(size);
+                s2 = (opcode & 1) == 0 ? peekOperand(size) : getOperand(size);
                 d = setOperand(size, s2 | s1);
                 setNZVC(d < 0, d == 0, false, c);
                 break;
             case 0x8a: // bicb2
             case 0xaa: // bicw2
             case 0xca: // bicl2
-                s1 = getOperand(size);
-                s2 = peekOperand(size);
-                d = setOperand(size, s2 & ~s1);
-                setNZVC(d < 0, d == 0, false, c);
-                break;
             case 0x8b: // bicb3
             case 0xab: // bicw3
             case 0xcb: // bicl3
                 s1 = getOperand(size);
-                s2 = getOperand(size);
+                s2 = (opcode & 1) == 0 ? peekOperand(size) : getOperand(size);
                 d = setOperand(size, s2 & ~s1);
                 setNZVC(d < 0, d == 0, false, c);
                 break;
