@@ -1074,6 +1074,22 @@ class VAX {
                     r[PC] += s3;
                 }
                 break;
+            case 0xe2: // bbss
+            case 0xe3: // bbcs
+            case 0xe4: // bbsc
+            case 0xe5: // bbcc
+                s1 = getOperand(4);
+                s2 = peekOperand(1);
+                if ((opcode & 4) == 0) {
+                    setOperand(1, s2 | (1 << s1));
+                } else {
+                    setOperand(1, s2 & ~(1 << s1));
+                }
+                s3 = fetch(1);
+                if (((s2 >> s1) & 1) != (opcode & 1)) {
+                    r[PC] += s3;
+                }
+                break;
             case 0xe8: // blbs
             case 0xe9: // blbc
                 s1 = getOperand(4);
