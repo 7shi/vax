@@ -825,6 +825,33 @@ class VAX {
         }
     }
 
+    public void cvtlp(int src, int dstlen, int dstaddr) {
+        int len = (dstlen >> 1) + 1;
+        int d = dstaddr + len - 1;
+        Arrays.fill(mem, dstaddr, d, (byte) 0);
+        mem[d] = (byte) (src < 0 ? 13 : 12);
+        int tmp = Math.abs(src);
+        for (int i = 0; i < dstlen && tmp > 0; ++i) {
+            byte b = (byte) (Integer.remainderUnsigned(tmp, 10));
+            if ((i & 1) == 0) {
+                mem[d] |= b << 4;
+            } else {
+                mem[--d] = b;
+            }
+            tmp = Integer.divideUnsigned(tmp, 10);
+        }
+        r[0] = r[1] = r[2] = 0;
+        r[3] = d;
+        setNZVC(src < 0, src == 0, tmp > 0, false);
+        if (mode >= 2) {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < len; ++i) {
+                sb.append(String.format(" %02x", Byte.toUnsignedInt(mem[dstaddr + i])));
+            }
+            System.err.printf("[cvtlp %d:%08x]%s\n", src, dstaddr, sb.toString());
+        }
+    }
+
     public void step() throws Exception {
         if (mode >= 2) {
             debug();
@@ -1069,36 +1096,11 @@ class VAX {
                 setNZVC(d < 0, d == 0, s1 != d, false);
                 break;
             case 0xf9: // cvtlp
-            {
                 s1 = getOperand(4);
                 s2 = getOperand(2);
                 s3 = getAddress(1);
-                int len = (s2 >> 1) + 1;
-                d = s3 + len - 1;
-                Arrays.fill(mem, s3, d, (byte) 0);
-                mem[d] = (byte) (s1 < 0 ? 13 : 12);
-                tmp = Math.abs(s1);
-                for (int i = 0; i < s2 && tmp > 0; ++i) {
-                    byte b = (byte) (Integer.remainderUnsigned(tmp, 10));
-                    if ((i & 1) == 0) {
-                        mem[d] |= b << 4;
-                    } else {
-                        mem[--d] = b;
-                    }
-                    tmp = Integer.divideUnsigned(tmp, 10);
-                }
-                r[0] = r[1] = r[2] = 0;
-                r[3] = d;
-                setNZVC(s1 < 0, s1 == 0, tmp > 0, false);
-                if (mode >= 2) {
-                    StringBuilder sb = new StringBuilder();
-                    for (int i = 0; i < len; ++i) {
-                        sb.append(String.format(" %02x", Byte.toUnsignedInt(mem[s3 + i])));
-                    }
-                    System.err.printf("[cvtlp %d:%08x]%s\n", s1, s3, sb.toString());
-                }
+                cvtlp(s1, s2, s3);
                 break;
-            }
             case 0x9a: // movzbl
                 s1 = getOperand(1);
                 setOperand(4, Byte.toUnsignedInt((byte) s1));
