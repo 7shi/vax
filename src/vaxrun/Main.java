@@ -1277,6 +1277,13 @@ class VAX {
                 s1 = getOperand(size);
                 setNZVC(s1 < 0, s1 == 0, false, false);
                 break;
+            case 0x96: // incb
+            case 0xb6: // incw
+            case 0xd6: // incl
+                s1 = peekOperand(size);
+                d = setOperand(size, s1 + 1);
+                setNZVC(d < 0, d == 0, s1 >= 0 && d < 0, d == 0);
+                break;
             case 0x97: // decb
             case 0xb7: // decw
             case 0xd7: // decl
