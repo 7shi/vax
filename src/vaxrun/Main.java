@@ -790,6 +790,10 @@ class VAX {
         return ret;
     }
 
+    public void disasm(PrintStream out) {
+        dis.disasm(out, 0, aout.a_text);
+    }
+
     public void run(int mode) throws Exception {
         this.mode = mode;
         if (mode >= 2) {
@@ -1271,10 +1275,6 @@ class VAX {
             default:
                 throw error("%08x: unknown opcode %02x", r[PC] - 1, opcode);
         }
-    }
-
-    public void disasm(PrintStream out) {
-        dis.disasm(out, 0, aout.a_text);
     }
 
     public final static String[] syscalls = {
