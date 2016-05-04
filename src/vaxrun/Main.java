@@ -1024,104 +1024,61 @@ class VAX {
                 r[PC] = getOperand(4);
                 break;
             case 0x12: // bneq / bnequ
-                s1 = fetch(1);
-                if (!z) {
-                    r[PC] += s1;
-                }
-                break;
             case 0x13: // beql / beqlu
                 s1 = fetch(1);
-                if (z) {
+                if (z == ((opcode & 1) != 0)) {
                     r[PC] += s1;
                 }
                 break;
             case 0x14: // bgtr
-                s1 = fetch(1);
-                if (!(n || z)) {
-                    r[PC] += s1;
-                }
-                break;
             case 0x15: // bleq
                 s1 = fetch(1);
-                if (n || z) {
+                if ((n || z) == ((opcode & 1) != 0)) {
                     r[PC] += s1;
                 }
                 break;
             case 0x18: // bgeq
-                s1 = fetch(1);
-                if (!n) {
-                    r[PC] += s1;
-                }
-                break;
             case 0x19: // blss
                 s1 = fetch(1);
-                if (n) {
+                if (n == ((opcode & 1) != 0)) {
                     r[PC] += s1;
                 }
                 break;
             case 0x1a: // bgtru
-                s1 = fetch(1);
-                if (!(c || z)) {
-                    r[PC] += s1;
-                }
-                break;
             case 0x1b: // blequ
                 s1 = fetch(1);
-                if (c || z) {
+                if ((c || z) == ((opcode & 1) != 0)) {
                     r[PC] += s1;
                 }
                 break;
             case 0x1c: // bvc
-                s1 = fetch(1);
-                if (!v) {
-                    r[PC] += s1;
-                }
-                break;
             case 0x1d: // bvs
                 s1 = fetch(1);
-                if (v) {
+                if (v == ((opcode & 1) != 0)) {
                     r[PC] += s1;
                 }
                 break;
             case 0x1e: // bgequ / bcc
-                s1 = fetch(1);
-                if (!c) {
-                    r[PC] += s1;
-                }
-                break;
             case 0x1f: // blssu / bcs
                 s1 = fetch(1);
-                if (c) {
+                if (c == ((opcode & 1) != 0)) {
                     r[PC] += s1;
                 }
                 break;
             case 0xe0: // bbs
-                s1 = getOperand(4);
-                s2 = getOperand(1);
-                s3 = fetch(1);
-                if ((s2 & (1 << s1)) != 0) {
-                    r[PC] += s3;
-                }
-                break;
             case 0xe1: // bbc
                 s1 = getOperand(4);
                 s2 = getOperand(1);
                 s3 = fetch(1);
-                if ((s2 & (1 << s1)) == 0) {
+                if (((s2 >> s1) & 1) != (opcode & 1)) {
                     r[PC] += s3;
                 }
                 break;
             case 0xe8: // blbs
-                s1 = getOperand(4);
-                s2 = fetch(1);
-                if ((s1 & 1) != 0) {
-                    r[PC] += s2;
-                }
-                break;
             case 0xe9: // blbc
                 s1 = getOperand(4);
                 s2 = fetch(1);
-                if ((s1 & 1) == 0) {
+                if ((s1 & 1) != (opcode & 1)) {
                     r[PC] += s2;
                 }
                 break;
