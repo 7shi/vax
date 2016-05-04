@@ -950,10 +950,10 @@ class VAX {
         if (mode >= 2) {
             debug();
         }
-        int opcode = fetch();
-        int size = 1 << ((opcode & 0x7f) >> 5);
+        int op = fetch();
+        int size = 1 << ((op & 0x7f) >> 5);
         int s1, s2, s3, d, tmp;
-        switch (opcode) {
+        switch (op) {
             case 0xbc: // chmk
                 syscall();
                 break;
@@ -1026,42 +1026,42 @@ class VAX {
             case 0x12: // bneq / bnequ
             case 0x13: // beql / beqlu
                 s1 = fetch(1);
-                if (z == ((opcode & 1) != 0)) {
+                if (z == ((op & 1) != 0)) {
                     r[PC] += s1;
                 }
                 break;
             case 0x14: // bgtr
             case 0x15: // bleq
                 s1 = fetch(1);
-                if ((n || z) == ((opcode & 1) != 0)) {
+                if ((n || z) == ((op & 1) != 0)) {
                     r[PC] += s1;
                 }
                 break;
             case 0x18: // bgeq
             case 0x19: // blss
                 s1 = fetch(1);
-                if (n == ((opcode & 1) != 0)) {
+                if (n == ((op & 1) != 0)) {
                     r[PC] += s1;
                 }
                 break;
             case 0x1a: // bgtru
             case 0x1b: // blequ
                 s1 = fetch(1);
-                if ((c || z) == ((opcode & 1) != 0)) {
+                if ((c || z) == ((op & 1) != 0)) {
                     r[PC] += s1;
                 }
                 break;
             case 0x1c: // bvc
             case 0x1d: // bvs
                 s1 = fetch(1);
-                if (v == ((opcode & 1) != 0)) {
+                if (v == ((op & 1) != 0)) {
                     r[PC] += s1;
                 }
                 break;
             case 0x1e: // bgequ / bcc
             case 0x1f: // blssu / bcs
                 s1 = fetch(1);
-                if (c == ((opcode & 1) != 0)) {
+                if (c == ((op & 1) != 0)) {
                     r[PC] += s1;
                 }
                 break;
@@ -1070,7 +1070,7 @@ class VAX {
                 s1 = getOperand(4);
                 s2 = getOperand(1);
                 s3 = fetch(1);
-                if (((s2 >> s1) & 1) != (opcode & 1)) {
+                if (((s2 >> s1) & 1) != (op & 1)) {
                     r[PC] += s3;
                 }
                 break;
@@ -1080,13 +1080,13 @@ class VAX {
             case 0xe5: // bbcc
                 s1 = getOperand(4);
                 s2 = peekOperand(1);
-                if ((opcode & 4) == 0) {
+                if ((op & 4) == 0) {
                     setOperand(1, s2 | (1 << s1));
                 } else {
                     setOperand(1, s2 & ~(1 << s1));
                 }
                 s3 = fetch(1);
-                if (((s2 >> s1) & 1) != (opcode & 1)) {
+                if (((s2 >> s1) & 1) != (op & 1)) {
                     r[PC] += s3;
                 }
                 break;
@@ -1094,7 +1094,7 @@ class VAX {
             case 0xe9: // blbc
                 s1 = getOperand(4);
                 s2 = fetch(1);
-                if ((s1 & 1) != (opcode & 1)) {
+                if ((s1 & 1) != (op & 1)) {
                     r[PC] += s2;
                 }
                 break;
@@ -1215,7 +1215,7 @@ class VAX {
             case 0xa1: // addw3
             case 0xc1: // addl3
                 s1 = getOperand(size);
-                s2 = (opcode & 1) == 0 ? peekOperand(size) : getOperand(size);
+                s2 = (op & 1) == 0 ? peekOperand(size) : getOperand(size);
                 d = setOperand(size, s2 + s1);
                 setNZVC(d < 0, d == 0,
                         (s1 < 0) == (s2 < 0) && (s2 < 0) != (d < 0),
@@ -1228,7 +1228,7 @@ class VAX {
             case 0xa3: // subw3
             case 0xc3: // subl3
                 s1 = getOperand(size);
-                s2 = (opcode & 1) == 0 ? peekOperand(size) : getOperand(size);
+                s2 = (op & 1) == 0 ? peekOperand(size) : getOperand(size);
                 d = setOperand(size, s2 - s1);
                 setNZVC(d < 0, d == 0,
                         (s1 < 0) != (s2 < 0) && (s2 < 0) != (d < 0),
@@ -1300,7 +1300,7 @@ class VAX {
             case 0xa9: // bisw3
             case 0xc9: // bisl3
                 s1 = getOperand(size);
-                s2 = (opcode & 1) == 0 ? peekOperand(size) : getOperand(size);
+                s2 = (op & 1) == 0 ? peekOperand(size) : getOperand(size);
                 d = setOperand(size, s2 | s1);
                 setNZVC(d < 0, d == 0, false, c);
                 break;
@@ -1311,7 +1311,7 @@ class VAX {
             case 0xab: // bicw3
             case 0xcb: // bicl3
                 s1 = getOperand(size);
-                s2 = (opcode & 1) == 0 ? peekOperand(size) : getOperand(size);
+                s2 = (op & 1) == 0 ? peekOperand(size) : getOperand(size);
                 d = setOperand(size, s2 & ~s1);
                 setNZVC(d < 0, d == 0, false, c);
                 break;
@@ -1351,7 +1351,7 @@ class VAX {
                 setNZVC(false, r[0] == 0, false, false);
                 break;
             default:
-                throw error("%08x: unknown opcode %02x", r[PC] - 1, opcode);
+                throw error("%08x: unknown opcode %02x", r[PC] - 1, op);
         }
     }
 
