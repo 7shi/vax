@@ -1369,7 +1369,6 @@ class VAX {
     public void syscall() throws Exception {
         int sc = fetch();
         if (mode >= 1) {
-            int argc = buf.getInt(r[AP]);
             System.err.println("[syscall] " + syscalls[sc] + "(" + getArgs() + ")");
         }
         switch (sc) {
