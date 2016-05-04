@@ -1351,7 +1351,7 @@ class VAX {
                 s1 = getOperand(1);
                 r[0] = getOperand(2);
                 r[1] = getAddress(1);
-                while (r[0] > 0 && mem[r[1]] != s1) {
+                while (r[0] != 0 && mem[r[1]] != s1) {
                     --r[0];
                     ++r[1];
                 }
@@ -1361,7 +1361,7 @@ class VAX {
                 s1 = getOperand(1);
                 r[0] = getOperand(2);
                 r[1] = getAddress(1);
-                while (r[0] > 0 && mem[r[1]] == s1) {
+                while (r[0] != 0 && mem[r[1]] == s1) {
                     --r[0];
                     ++r[1];
                 }
