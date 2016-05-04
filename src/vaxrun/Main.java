@@ -1374,6 +1374,26 @@ class VAX {
                 d = setOperand(size, -s1);
                 setNZVC(d < 0, d == 0, s1 == d, d != 0);
                 break;
+            case 0x3a: // locc
+                s1 = getOperand(1);
+                r[0] = getOperand(2);
+                r[1] = getAddress(1);
+                while (r[0] > 0 && mem[r[1]] != s1) {
+                    --r[0];
+                    ++r[1];
+                }
+                setNZVC(false, r[0] == 0, false, false);
+                break;
+            case 0x3b: // skpc
+                s1 = getOperand(1);
+                r[0] = getOperand(2);
+                r[1] = getAddress(1);
+                while (r[0] > 0 && mem[r[1]] == s1) {
+                    --r[0];
+                    ++r[1];
+                }
+                setNZVC(false, r[0] == 0, false, false);
+                break;
             default:
                 throw error("%08x: unknown opcode %02x", r[PC] - 1, opcode);
         }
