@@ -852,6 +852,10 @@ class VAX {
         }
     }
 
+    public void editpc(int srclen, int srcaddr, int pattern, int dstaddr) throws Exception {
+        throw error("editpc 0x%x,0x%x,0x%x,0x%x", srclen, srcaddr, pattern, dstaddr);
+    }
+
     public void step() throws Exception {
         if (mode >= 2) {
             debug();
@@ -1100,6 +1104,12 @@ class VAX {
                 s2 = getOperand(2);
                 s3 = getAddress(1);
                 cvtlp(s1, s2, s3);
+                break;
+            case 0x38: // editpc
+                s1 = getOperand(2);
+                s2 = getAddress(1);
+                s3 = getAddress(1);
+                editpc(s1, s2, s3, getAddress(1));
                 break;
             case 0x9a: // movzbl
                 s1 = getOperand(1);
