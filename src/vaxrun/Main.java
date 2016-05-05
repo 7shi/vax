@@ -640,9 +640,7 @@ class VAX {
     }
 
     public int peekOperand(int size) throws Exception {
-        int pc = r[PC];
-        int b = Byte.toUnsignedInt(mem[pc++]);
-        int rn = b & 15;
+        int b = Byte.toUnsignedInt(mem[r[PC]]);
         switch (b >> 4) {
             case 0:
             case 1:
@@ -650,21 +648,9 @@ class VAX {
             case 3:
                 return b;
             case 5: // r
-                return reg(rn, 1);
-            case 6: // (r)
-                return get(reg(rn, 1), size);
-            case 7: // -(r)
-                return get(reg(rn, 1) - size, size);
-            case 8: // (r)+
-                return get(reg(rn, 1), size);
-            case 0xa: // b(r)
-                return get(reg(rn, 2) + mem[pc], size);
-            case 0xb: // *b(r)
-                return get(get(reg(rn, 2) + mem[pc], 4), size);
-            case 0xe: // l(r)
-                return get(reg(rn, 5) + buf.getInt(pc), size);
+                return reg(b & 15, 1);
         }
-        throw error("%08x: unknown operand %02x", r[PC], b);
+        return get(peekAddress(size), size);
     }
 
     public int getOperand(int size) throws Exception {
@@ -705,6 +691,27 @@ class VAX {
             }
         }
         return set(getAddress(size), size, value);
+    }
+
+    public int peekAddress(int size) throws Exception {
+        int pc = r[PC];
+        int b = Byte.toUnsignedInt(mem[pc++]);
+        int rn = b & 15;
+        switch (b >> 4) {
+            case 6: // (r)
+                return reg(rn, 1);
+            case 7: // -(r)
+                return reg(rn, 1) - size;
+            case 8: // (r)+
+                return reg(rn, 1);
+            case 0xa: // b(r)
+                return reg(rn, 2) + mem[pc];
+            case 0xb: // *b(r)
+                return get(reg(rn, 2) + mem[pc], 4);
+            case 0xe: // l(r)
+                return reg(rn, 5) + buf.getInt(pc);
+        }
+        throw error("%08x: unknown operand %02x", r[PC], b);
     }
 
     public int getAddress(int size) throws Exception {
