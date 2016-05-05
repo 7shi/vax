@@ -713,7 +713,7 @@ class VAX {
         int rn = b & 15, disp, ret;
         switch (b >> 4) {
             case 4: // [r]
-                return getAddress(size) + r[rn];
+                return getAddress(size) + size * r[rn];
             case 6: // (r)
                 return r[rn];
             case 7: // -(r)
