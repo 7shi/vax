@@ -1469,10 +1469,10 @@ public class Main {
             }
         }
         if (aout == null) {
-            System.err.println("usage: vaxrun [-d|-v] a.out [...]");
-            System.err.println("    -d: disasm");
-            System.err.println("    -v: verbose (debug mode)");
-            System.err.println("    -s: syscall (debug mode)");
+            System.err.println("usage: vaxrun [-d|-v/-s] a.out [args ...]");
+            System.err.println("    -d: disassemble mode (not run)");
+            System.err.println("    -v: verbose mode (output syscall and disassemble)");
+            System.err.println("    -s: syscall mode (output syscall)");
             System.exit(1);
         }
         try {
