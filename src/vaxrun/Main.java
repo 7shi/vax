@@ -1123,6 +1123,21 @@ class VAX {
                     r[PC] += s2;
                 }
                 break;
+            case 0x9d: // acbb
+            case 0x3d: // acbw
+            case 0xf1: // acbl
+                s1 = getOperand(size);
+                s2 = getOperand(size);
+                s3 = peekOperand(size);
+                d = setOperand(size, s3 + s2);
+                setNZVC(d < 0, d == 0,
+                        (s2 < 0) == (s3 < 0) && (s3 < 0) != (d < 0),
+                        c);
+                tmp = fetch(2);
+                if ((s2 >= 0 && d < s1) || (s2 < 0 && d >= s1)) {
+                    r[PC] += tmp;
+                }
+                break;
             case 0x8f: // caseb
             case 0xaf: // casew
             case 0xcf: // casel
