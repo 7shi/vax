@@ -1123,9 +1123,10 @@ class VAX {
                     r[PC] += s2;
                 }
                 break;
+            case 0xf1: // acbl
+                size = 4;
             case 0x9d: // acbb
             case 0x3d: // acbw
-            case 0xf1: // acbl
                 s1 = getOperand(size);
                 s2 = getOperand(size);
                 s3 = peekOperand(size);
