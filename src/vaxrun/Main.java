@@ -706,12 +706,20 @@ class VAX {
                 return reg(rn, ofs + 1) - size;
             case 8: // (r)+
                 return reg(rn, ofs + 1);
+            case 9: // *(r)+
+                return get(reg(rn, ofs + 1), 4);
             case 0xa: // b(r)
                 return reg(rn, ofs + 2) + mem[pc];
             case 0xb: // *b(r)
                 return get(reg(rn, ofs + 2) + mem[pc], 4);
+            case 0xc: // w(r)
+                return reg(rn, ofs + 3) + buf.getShort(pc);
+            case 0xd: // *w(r)
+                return get(reg(rn, ofs + 3) + buf.getShort(pc), 4);
             case 0xe: // l(r)
                 return reg(rn, ofs + 5) + buf.getInt(pc);
+            case 0xf: // *l(r)
+                return get(reg(rn, ofs + 5) + buf.getInt(pc), 4);
         }
         throw error("%08x: unknown operand %02x", r[PC] + ofs, b);
     }
@@ -731,15 +739,28 @@ class VAX {
                 ret = r[rn];
                 r[rn] += size;
                 return ret;
+            case 9: // *(r)+
+                ret = get(r[rn], 4);
+                r[rn] += 4;
+                return ret;
             case 0xa: // b(r)
                 disp = fetch(1);
                 return r[rn] + disp;
             case 0xb: // *b(r)
                 disp = fetch(1);
                 return get(r[rn] + disp, 4);
+            case 0xc: // w(r)
+                disp = fetch(2);
+                return r[rn] + disp;
+            case 0xd: // *w(r)
+                disp = fetch(2);
+                return get(r[rn] + disp, 4);
             case 0xe: // l(r)
                 disp = fetch(4);
                 return r[rn] + disp;
+            case 0xf: // *l(r)
+                disp = fetch(4);
+                return get(r[rn] + disp, 4);
         }
         throw error("%08x: not addr %02x", pc, b);
     }
