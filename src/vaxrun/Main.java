@@ -196,15 +196,21 @@ class VAXDisasm {
 
     private final ByteBuffer buf;
     private final AOut aout;
-    private int pc, offset, casead, casec;
+    private int pc, offset, casead, casec, mode;
     private LinkedList<Symbol> addrs;
+    private final int[] r;
 
-    public VAXDisasm(ByteBuffer buf, AOut aout) {
+    public VAXDisasm(ByteBuffer buf, AOut aout, int[] r) {
         this.buf = buf;
         this.aout = aout;
         if (aout.a_entry < 0) {
             offset = 0x80000000;
         }
+        this.r = r;
+    }
+
+    public void setMode(int mode) {
+        this.mode = mode;
     }
 
     public int fetch() {
@@ -214,13 +220,17 @@ class VAXDisasm {
     public int fetch(int size) {
         int oldpc = pc;
         pc += size;
+        return get(oldpc, size);
+    }
+
+    public int get(int addr, int size) {
         switch (size) {
             case 1:
-                return buf.get(oldpc);
+                return buf.get(addr);
             case 2:
-                return buf.getShort(oldpc);
+                return buf.getShort(addr);
             case 4:
-                return buf.getInt(oldpc);
+                return buf.getInt(addr);
         }
         return 0;
     }
@@ -289,7 +299,8 @@ class VAXDisasm {
             return String.format("0x%x", ad);
         }
         int b = fetch(), b1 = b >> 4, b2 = b & 15;
-        String r = regs[b2];
+        String rn = regs[b2];
+        int rv = b2 == 15 ? pc : r[b2];
         switch (b1) {
             case 0:
             case 1:
@@ -297,32 +308,34 @@ class VAXDisasm {
             case 3:
                 return "$" + hex(b) + t.valueSuffix;
             case 4:
-                return getOperand(t) + "[" + r + "]";
+                return getOperand(t) + "[" + rn + "]";
             case 5:
-                return r;
+                return rn;
             case 6:
-                return "(" + r + ")";
+                return "(" + rn + ")" + mem(rv, t.size, false);
             case 7:
-                return "-(" + r + ")";
+                return "-(" + rn + ")" + mem(rv - t.size, t.size, false);
             case 8:
                 if (b2 == 15) {
                     return "$" + fetchHex(t.size, t.valueSuffix);
                 } else {
-                    return "(" + r + ")+";
+                    return "(" + rn + ")+" + mem(rv, t.size, false);
                 }
             case 9:
                 if (b2 == 15) {
-                    return "*" + address(fetch(4));
+                    return "*" + address(fetch(4), t.size, true);
                 } else {
-                    return "*(" + r + ")+";
+                    return "*(" + rn + ")+" + mem(rv, t.size, true);
                 }
             default: {
-                String prefix = (b1 & 1) == 1 ? "*" : "";
+                boolean deref = (b1 & 1) == 1;
+                String prefix = deref ? "*" : "";
                 int disp = fetch(1 << ((b1 - 0xa) >> 1));
                 if (b2 == 15) {
-                    return prefix + address(pc + disp);
+                    return prefix + address(pc + disp, t.size, deref);
                 } else {
-                    return String.format("%s%s(%s)", prefix, hex(disp), r);
+                    return prefix + hex(disp) + "(" + rn + ")"
+                            + mem(rv + disp, t.size, deref);
                 }
             }
         }
@@ -417,13 +430,36 @@ class VAXDisasm {
         return word();
     }
 
-    public String address(int ad) {
-        addAddress(ad);
-        String ret = String.format("0x%x", ad);
-        if (aout != null && aout.symT.containsKey(ad)) {
-            ret += "<" + aout.symT.get(ad) + ">";
+    public String memstr(int ad, int size, boolean deref) {
+        if (!deref) {
+            return hex(get(ad, size), size);
         }
-        return ret;
+        int ad2 = get(ad, 4);
+        return hex(ad2, 4) + ":" + hex(get(ad2, size), size);
+    }
+
+    public String mem(int ad, int size, boolean deref) {
+        if (mode <= 2) {
+            return "";
+        }
+        return "<" + hex(ad, 4) + ":" + memstr(ad, size, deref) + ">";
+    }
+
+    public String sym(int ad, int size, boolean deref) {
+        boolean f = mode > 2 && ad >= aout.a_text;
+        if (aout.symT.containsKey(ad)) {
+            String s = aout.symT.get(ad);
+            if (!f) {
+                return "<" + s + ">";
+            }
+            return "<" + s + ":" + memstr(ad, size, deref) + ">";
+        }
+        return !f ? "" : "<" + memstr(ad, size, deref) + ">";
+    }
+
+    public String address(int ad, int size, boolean deref) {
+        addAddress(ad);
+        return "0x" + Integer.toHexString(ad) + sym(ad, size, deref);
     }
 
     public static String hex(int v) {
@@ -433,7 +469,19 @@ class VAXDisasm {
             v = -v;
         }
         String x = v < 10 ? "" : "0x";
-        return String.format("%s%s%x", sign, x, v);
+        return sign + x + Integer.toHexString(v);
+    }
+
+    public static String hex(int v, int size) {
+        switch (size) {
+            case 1:
+                v &= 0xff;
+                break;
+            case 2:
+                v &= 0xffff;
+                break;
+        }
+        return Integer.toHexString(v);
     }
 }
 
@@ -558,7 +606,7 @@ class VAX {
         System.arraycopy(aout.data, 0, mem, dstart, aout.a_data);
         r[PC] = aout.a_entry;
         buf = ByteBuffer.wrap(mem).order(ByteOrder.LITTLE_ENDIAN);
-        dis = new VAXDisasm(buf, aout);
+        dis = new VAXDisasm(buf, aout, r);
         setArgs(args);
     }
 
@@ -829,7 +877,7 @@ class VAX {
     }
 
     public void run(int mode) throws Exception {
-        this.mode = mode;
+        dis.setMode(this.mode = mode);
         if (mode >= 2) {
             System.err.print("   r0       r1       r2       r3   -");
             System.err.print("   r4       r5       r6       r7   -");
@@ -1462,6 +1510,9 @@ public class Main {
                 case "-v":
                     mode = 2;
                     break;
+                case "-m":
+                    mode = 3;
+                    break;
                 default:
                     aout = arg;
                     args2 = Arrays.copyOfRange(args, i, args.length);
@@ -1471,6 +1522,7 @@ public class Main {
         if (aout == null) {
             System.err.println("usage: vaxrun [-d|-v/-s] a.out [args ...]");
             System.err.println("    -d: disassemble mode (not run)");
+            System.err.println("    -m: verbose mode with memory dump");
             System.err.println("    -v: verbose mode (output syscall and disassemble)");
             System.err.println("    -s: syscall mode (output syscall)");
             System.exit(1);
