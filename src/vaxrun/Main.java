@@ -1216,19 +1216,14 @@ class VAX {
                 s1 = getOperand(4);
                 s2 = getOperand(1);
                 s3 = getOperand(1);
-                tmp = s3 & (((1 << s2) - 1) << s1);
-                if ((tmp & (1 << (s1 + s2 - 1))) != 0) {
-                    tmp |= ~((1 << (s1 + s2)) - 1);
-                }
-                d = setOperand(4, tmp);
+                d = setOperand(4, s2 == 0 ? 0 : s3 << (32 - s1 - s2) >> (32 - s2));
                 setNZVC(d < 0, d == 0, false, false);
                 break;
             case 0xef: // extzv
                 s1 = getOperand(4);
                 s2 = getOperand(1);
                 s3 = getOperand(1);
-                tmp = s3 & (((1 << s2) - 1) << s1);
-                d = setOperand(4, tmp);
+                d = setOperand(4, s2 == 0 ? 0 : (s3 >> s1) & ((1 << s2) - 1));
                 setNZVC(d < 0, d == 0, false, false);
                 break;
             case 0x80: // addb2
