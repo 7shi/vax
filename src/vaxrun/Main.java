@@ -650,7 +650,7 @@ class VAX {
             case 5: // r
                 return reg(b & 15, 1);
         }
-        return get(peekAddress(size), size);
+        return get(peekAddress(size, 0), size);
     }
 
     public int getOperand(int size) throws Exception {
@@ -693,25 +693,27 @@ class VAX {
         return set(getAddress(size), size, value);
     }
 
-    public int peekAddress(int size) throws Exception {
-        int pc = r[PC];
+    public int peekAddress(int size, int ofs) throws Exception {
+        int pc = r[PC] + ofs;
         int b = Byte.toUnsignedInt(mem[pc++]);
         int rn = b & 15;
         switch (b >> 4) {
+            case 4: // [r]
+                return peekAddress(size, ofs + 1) + size * reg(rn, ofs + 1);
             case 6: // (r)
-                return reg(rn, 1);
+                return reg(rn, ofs + 1);
             case 7: // -(r)
-                return reg(rn, 1) - size;
+                return reg(rn, ofs + 1) - size;
             case 8: // (r)+
-                return reg(rn, 1);
+                return reg(rn, ofs + 1);
             case 0xa: // b(r)
-                return reg(rn, 2) + mem[pc];
+                return reg(rn, ofs + 2) + mem[pc];
             case 0xb: // *b(r)
-                return get(reg(rn, 2) + mem[pc], 4);
+                return get(reg(rn, ofs + 2) + mem[pc], 4);
             case 0xe: // l(r)
-                return reg(rn, 5) + buf.getInt(pc);
+                return reg(rn, ofs + 5) + buf.getInt(pc);
         }
-        throw error("%08x: unknown operand %02x", r[PC], b);
+        throw error("%08x: unknown operand %02x", r[PC] + ofs, b);
     }
 
     public int getAddress(int size) throws Exception {
