@@ -373,9 +373,11 @@ class VAXDisasm {
             while (!addrs.isEmpty() && addrs.peek().value == pc) {
                 Symbol s = addrs.remove();
                 if (s.isObject()) {
-                    System.out.printf("[%s]\n", s.name);
+                    System.out.printf("[%s]", s.name);
+                    System.out.println();
                 } else if (!s.isNull()) {
-                    System.out.printf("%s:\n", s.name);
+                    System.out.printf("%s:", s.name);
+                    System.out.println();
                     w = true;
                 }
             }
@@ -734,11 +736,12 @@ class VAX {
     }
 
     public void debug() {
-        System.err.printf("%08x %08x %08x %08x-%08x %08x %08x %08x-%08x %08x %08x %08x-%08x %08x %08x %c%c%c%c %08x %s\n",
+        System.err.printf("%08x %08x %08x %08x-%08x %08x %08x %08x-%08x %08x %08x %08x-%08x %08x %08x %c%c%c%c %08x %s",
                 r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7],
                 r[8], r[9], r[10], r[11], r[12], r[13], r[14],
                 n ? 'N' : '-', z ? 'Z' : '-', v ? 'V' : '-', c ? 'C' : '-',
                 r[15], dis.disasm1(r[PC]));
+        System.err.println();
     }
 
     public String getCallStack() {
@@ -763,7 +766,8 @@ class VAX {
             if (args) {
                 s += "(" + getArgs() + ")";
             }
-            System.err.printf("%-139s %08x %s\n", s, r[PC], dis.word(r[PC]));
+            System.err.printf("%-139s %08x %s", s, r[PC], dis.word(r[PC]));
+            System.err.println();
         }
         r[PC] += 2;
     }
@@ -848,7 +852,8 @@ class VAX {
             for (int i = 0; i < len; ++i) {
                 sb.append(String.format(" %02x", Byte.toUnsignedInt(mem[dstaddr + i])));
             }
-            System.err.printf("[cvtlp %d:%08x]%s\n", src, dstaddr, sb.toString());
+            System.err.printf("[cvtlp %d:%08x]%s", src, dstaddr, sb.toString());
+            System.err.println();
         }
     }
 
@@ -856,10 +861,11 @@ class VAX {
         if (mode < 2) {
             return;
         }
-        System.err.printf("[editpc] r0=%08x r1=%08x r2=%08x r4=%08x r5=%08x %c%c%c%c r3=%08x %s\n",
+        System.err.printf("[editpc] r0=%08x r1=%08x r2=%08x r4=%08x r5=%08x %c%c%c%c r3=%08x %s",
                 r[0], r[1], r[2], r[4], r[5],
                 n ? 'N' : '-', z ? 'Z' : '-', v ? 'V' : '-', c ? 'C' : '-',
                 r[3], cmd);
+        System.err.println();
     }
 
     private int editpcRead() throws Exception {
@@ -942,7 +948,8 @@ class VAX {
         r[4] = 0;
         if (mode >= 2) {
             String dststr = getString(dstaddr, r[5] - dstaddr);
-            System.err.printf("[editpc:%08x] \"%s\"\n", dstaddr, dststr);
+            System.err.printf("[editpc:%08x] \"%s\"", dstaddr, dststr);
+            System.err.println();
         }
     }
 
