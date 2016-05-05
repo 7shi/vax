@@ -935,7 +935,7 @@ class VAX {
                     }
                     break;
                 default:
-                    editpcDebug(String.format("?%02x", b));
+                    throw error("editpc: unknown operator %02x", b);
             }
         }
         if (z) {
