@@ -193,12 +193,14 @@ class VAXDisasm {
         "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
         "r8", "r9", "r10", "r11", "ap", "fp", "sp", "pc"
     };
+    private final static int PC = 15;
 
     private final ByteBuffer buf;
     private final AOut aout;
-    private int pc, offset, casead, casec, mode;
+    private int offset, casead, casec, mode;
     private LinkedList<Symbol> addrs;
-    private final int[] r;
+    private final int[] r = new int[16];
+    private final int[] vmr;
 
     public VAXDisasm(ByteBuffer buf, AOut aout, int[] r) {
         this.buf = buf;
@@ -206,7 +208,7 @@ class VAXDisasm {
         if (aout.a_entry < 0) {
             offset = 0x80000000;
         }
-        this.r = r;
+        this.vmr = r;
     }
 
     public void setMode(int mode) {
@@ -214,12 +216,12 @@ class VAXDisasm {
     }
 
     public int fetch() {
-        return Byte.toUnsignedInt(buf.get(pc++));
+        return Byte.toUnsignedInt(buf.get(r[PC]++));
     }
 
     public int fetch(int size) {
-        int oldpc = pc;
-        pc += size;
+        int oldpc = r[PC];
+        r[PC] += size;
         return get(oldpc, size);
     }
 
@@ -277,7 +279,7 @@ class VAXDisasm {
     }
 
     public void addAddress(int ad) {
-        if (addrs == null || ad <= pc) {
+        if (addrs == null || ad <= r[PC]) {
             return;
         }
         Symbol sym = new Symbol(ad);
@@ -294,55 +296,98 @@ class VAXDisasm {
 
     public String getOperand(VAXType t) {
         if (t == VAXType.RELB || t == VAXType.RELW) {
-            int rel = fetch(t.size), ad = pc + rel;
+            int rel = fetch(t.size), ad = r[PC] + rel;
             addAddress(ad);
             return String.format("0x%x", ad);
         }
-        int b = fetch(), b1 = b >> 4, b2 = b & 15;
-        String rn = regs[b2];
-        int rv = b2 == 15 ? pc : r[b2];
-        switch (b1) {
+        int b = fetch(), adm = b >> 4, rn = b & 15;
+        String reg = regs[rn], ret;
+        switch (adm) {
             case 0:
             case 1:
             case 2:
             case 3:
                 return "$" + hex(b) + t.valueSuffix;
-            case 4:
-                return getOperand(t) + "[" + rn + "]";
+            case 4: {
+                int ad = peekAddress(t.size);
+                int oldmode = mode;
+                mode = 0;
+                String opr = getOperand(t) + "[" + reg + "]";
+                mode = oldmode;
+                return opr + mem(ad + t.size * r[rn], t.size, false);
+            }
             case 5:
-                return rn;
+                return reg;
             case 6:
-                return "(" + rn + ")" + mem(rv, t.size, false);
+                return "(" + reg + ")" + mem(r[rn], t.size, false);
             case 7:
-                return "-(" + rn + ")" + mem(rv - t.size, t.size, false);
+                r[rn] -= t.size;
+                return "-(" + reg + ")" + mem(r[rn], t.size, false);
             case 8:
-                if (b2 == 15) {
+                if (rn == 15) {
                     return "$" + fetchHex(t.size, t.valueSuffix);
                 } else {
-                    return "(" + rn + ")+" + mem(rv, t.size, false);
+                    ret = "(" + reg + ")+" + mem(r[rn], t.size, false);
+                    r[rn] += t.size;
+                    return ret;
                 }
             case 9:
-                if (b2 == 15) {
+                if (rn == 15) {
                     return "*" + address(fetch(4), t.size, true);
                 } else {
-                    return "*(" + rn + ")+" + mem(rv, t.size, true);
+                    ret = "*(" + reg + ")+" + mem(r[rn], t.size, true);
+                    r[rn] += 4;
+                    return ret;
                 }
             default: {
-                boolean deref = (b1 & 1) == 1;
+                boolean deref = (adm & 1) == 1;
                 String prefix = deref ? "*" : "";
-                int disp = fetch(1 << ((b1 - 0xa) >> 1));
-                if (b2 == 15) {
-                    return prefix + address(pc + disp, t.size, deref);
+                int disp = fetch(1 << ((adm - 0xa) >> 1));
+                if (rn == 15) {
+                    return prefix + address(r[PC] + disp, t.size, deref);
                 } else {
-                    return prefix + hex(disp) + "(" + rn + ")"
-                            + mem(rv + disp, t.size, deref);
+                    return prefix + hex(disp) + "(" + reg + ")"
+                            + mem(r[rn] + disp, t.size, deref);
                 }
             }
         }
     }
 
+    public int reg(int n, int offset) {
+        return n == 15 ? r[n] + offset : r[n];
+    }
+
+    public int peekAddress(int size) {
+        if (mode <= 2) {
+            return 0;
+        }
+        int b = Byte.toUnsignedInt(buf.get(r[PC]));
+        int adm = b >> 4, rn = b & 15;
+        switch (adm) {
+            case 6: // (r)
+                return reg(rn, 1);
+            case 7: // -(r)
+                return reg(rn, 1) - size;
+            case 8: // (r)+
+                return reg(rn, 1);
+            case 9: // *(r)+
+                return get(reg(rn, 1), 4);
+            default: {
+                int dsize = 1 << ((adm - 0xa) >> 1);
+                int disp = get(r[PC] + 1, dsize);
+                if ((adm & 1) == 0) {
+                    return reg(rn, 1 + dsize) + disp;
+                }
+                return get(reg(rn, 1 + dsize) + disp, 4);
+            }
+        }
+    }
+
     public String disasm1(int addr) {
-        pc = addr;
+        if (vmr != null) {
+            System.arraycopy(vmr, 0, r, 0, 16);
+        }
+        r[PC] = addr;
         int opc = fetch();
         VAXOp op = VAXOp.table[opc];
         if (op == null) {
@@ -360,7 +405,7 @@ class VAXDisasm {
                 case CASEW:
                 case CASEL:
                     if (i == op.oprs.length - 1) {
-                        casead = pc;
+                        casead = r[PC];
                         if (opr.startsWith("$0x")) {
                             casec = Integer.parseInt(opr.substring(3), 16) + 1;
                         } else if (opr.startsWith("$")) {
@@ -377,13 +422,13 @@ class VAXDisasm {
     public void disasm(PrintStream out, int start, int end) {
         addrs = aout != null ? aout.getAddresses() : new LinkedList<>();
         casec = 0;
-        pc = start;
-        while (pc < end) {
-            while (!addrs.isEmpty() && addrs.peek().value < pc) {
+        r[PC] = start;
+        while (r[PC] < end) {
+            while (!addrs.isEmpty() && addrs.peek().value < r[PC]) {
                 addrs.remove();
             }
-            boolean w = pc == aout.a_entry;
-            while (!addrs.isEmpty() && addrs.peek().value == pc) {
+            boolean w = r[PC] == aout.a_entry;
+            while (!addrs.isEmpty() && addrs.peek().value == r[PC]) {
                 Symbol s = addrs.remove();
                 if (s.isObject()) {
                     System.out.printf("[%s]", s.name);
@@ -394,7 +439,7 @@ class VAXDisasm {
                     w = true;
                 }
             }
-            int oldpc = pc;
+            int oldpc = r[PC];
             String asm;
             if (casec > 0) {
                 int ad = casead + fetch(2);
@@ -402,14 +447,14 @@ class VAXDisasm {
                 asm = String.format(".word 0x%x-0x%x", ad, casead);
                 --casec;
             } else {
-                asm = w ? word() : disasm1(pc);
+                asm = w ? word() : disasm1(r[PC]);
             }
-            if (!addrs.isEmpty() && addrs.peek().value < pc) {
+            if (!addrs.isEmpty() && addrs.peek().value < r[PC]) {
                 Symbol s = addrs.peek();
-                pc = oldpc;
-                asm = bytes(s.value - pc);
+                r[PC] = oldpc;
+                asm = bytes(s.value - r[PC]);
             }
-            output(out, oldpc, pc - oldpc, asm);
+            output(out, oldpc, r[PC] - oldpc, asm);
         }
     }
 
@@ -426,7 +471,7 @@ class VAXDisasm {
     }
 
     public String word(int pc) {
-        this.pc = pc;
+        r[PC] = pc;
         return word();
     }
 
@@ -482,6 +527,7 @@ class VAXDisasm {
                 break;
         }
         return Integer.toHexString(v);
+
     }
 }
 
