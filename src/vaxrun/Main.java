@@ -205,7 +205,7 @@ class VAXDisasm {
     public VAXDisasm(ByteBuffer buf, AOut aout, int[] r) {
         this.buf = buf;
         this.aout = aout;
-        if (aout.a_entry < 0) {
+        if (aout != null && aout.a_entry < 0) {
             offset = 0x80000000;
         }
         this.vmr = r;
@@ -427,7 +427,7 @@ class VAXDisasm {
             while (!addrs.isEmpty() && addrs.peek().value < r[PC]) {
                 addrs.remove();
             }
-            boolean w = r[PC] == aout.a_entry;
+            boolean w = r[PC] == (aout != null ? aout.a_entry : 0);
             while (!addrs.isEmpty() && addrs.peek().value == r[PC]) {
                 Symbol s = addrs.remove();
                 if (s.isObject()) {
@@ -491,8 +491,8 @@ class VAXDisasm {
     }
 
     public String sym(int ad, int size, boolean deref) {
-        boolean f = mode > 2 && ad >= aout.a_text;
-        if (aout.symT.containsKey(ad)) {
+        boolean f = mode > 2 && aout != null && ad >= aout.a_text;
+        if (aout != null && aout.symT.containsKey(ad)) {
             String s = aout.symT.get(ad);
             if (!f) {
                 return "<" + s + ">";
