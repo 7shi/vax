@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Random;
 import java.util.Stack;
 
 enum VAXType {
@@ -211,6 +212,10 @@ class VAXDisasm {
         this.vmr = r;
     }
 
+    public int getPC() {
+        return r[PC];
+    }
+
     public void setMode(int mode) {
         this.mode = mode;
     }
@@ -351,6 +356,11 @@ class VAXDisasm {
                 }
             }
         }
+    }
+
+    public String getOperand(VAXType t, int addr) {
+        r[PC] = addr;
+        return getOperand(t);
     }
 
     public int reg(int n, int offset) {
@@ -1538,6 +1548,21 @@ class VAX {
 
 public class Main {
 
+    static void test() {
+
+        byte[] mem = new byte[256];
+        ByteBuffer buf = ByteBuffer.wrap(mem).order(ByteOrder.LITTLE_ENDIAN);
+        VAXDisasm dis = new VAXDisasm(buf, null, null);
+        Random r = new Random();
+        r.nextBytes(mem);
+        for (int pc = 0; pc < mem.length - 32;) {
+            String s = dis.getOperand(VAXType.LONG, pc);
+            int len = Math.max(1, dis.getPC() - pc);  // for 7f -(pc)
+            dis.output(System.out, pc, len, s);
+            pc += len;
+        }
+    }
+
     public static void main(String[] args) {
         boolean disasm = false;
         int mode = 0;
@@ -1566,11 +1591,12 @@ public class Main {
             }
         }
         if (aout == null) {
-            System.err.println("usage: vaxrun [-d|-v/-s] a.out [args ...]");
-            System.err.println("    -d: disassemble mode (not run)");
-            System.err.println("    -m: verbose mode with memory dump");
-            System.err.println("    -v: verbose mode (output syscall and disassemble)");
-            System.err.println("    -s: syscall mode (output syscall)");
+//            System.err.println("usage: vaxrun [-d|-v/-s] a.out [args ...]");
+//            System.err.println("    -d: disassemble mode (not run)");
+//            System.err.println("    -m: verbose mode with memory dump");
+//            System.err.println("    -v: verbose mode (output syscall and disassemble)");
+//            System.err.println("    -s: syscall mode (output syscall)");
+            test();
             System.exit(1);
         }
         try {
