@@ -1838,7 +1838,7 @@ public class Main {
             String s = dis.getOperand(VAXType.LONG, pc);
             byte[] bin = asm.asm(pc, s);
             int len = dis.getPC() - pc;
-            while (len < 0) {  // for 7f: -(pc)
+            while (len < 1) {  // for 7f: -(pc)
                 len += 4;
             }
             if (Arrays.equals(bin, Arrays.copyOfRange(mem, pc, pc + len))) {
