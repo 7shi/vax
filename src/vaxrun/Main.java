@@ -613,7 +613,7 @@ class VAXDisasm {
                 }
             case 9:
                 if (rn == 15) {
-                    return "*" + address(fetch(4), t.size, true);
+                    return "*$" + address(fetch(4), t.size, true);
                 } else {
                     ret = "*(" + reg + ")+" + mem(r[rn], t.size, true);
                     r[rn] += 4;
