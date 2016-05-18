@@ -188,6 +188,131 @@ class Symbol {
     }
 }
 
+class VAXAsm {
+
+    private String s;
+    private byte[] bin = new byte[32];
+    ByteBuffer buf = ByteBuffer.wrap(bin).order(ByteOrder.LITTLE_ENDIAN);
+    private int pc, pos, bpos;
+
+    private int peek() {
+        if (s == null || pos >= s.length()) {
+            return -1;
+        }
+        return s.charAt(pos);
+    }
+
+    private void skip() {
+        int ch;
+        while ((ch = peek()) == ' ' || ch == '\t') {
+            ++pos;
+        }
+    }
+
+    private boolean check(char ch) {
+        skip();
+        if (peek() == ch) {
+            ++pos;
+            return true;
+        }
+        return false;
+    }
+
+    private int digits8() throws Exception {
+        int ret = 0, p = pos, ch;
+        for (; '0' <= (ch = peek()) && ch <= '7'; ++pos) {
+            ret <<= 3;
+            ret |= ch - '0';
+        }
+        if (p == pos) {
+            throw new Exception("oct required");
+        }
+        return ret;
+    }
+
+    private int digits10() throws Exception {
+        int ret = 0, p = pos, ch;
+        for (; '0' <= (ch = peek()) && ch <= '9'; ++pos) {
+            ret *= 10;
+            ret += ch - '0';
+        }
+        if (p == pos) {
+            throw new Exception("number required");
+        }
+        return ret;
+    }
+
+    private int digits16() throws Exception {
+        int ret = 0, p = pos;
+        for (;; ++pos) {
+            int ch = peek();
+            if ('0' <= ch && ch <= '9') {
+                ret <<= 4;
+                ret |= ch - '0';
+            } else if ('A' <= ch && ch <= 'F') {
+                ret <<= 4;
+                ret |= ch - 'A' + 10;
+            } else if ('a' <= ch && ch <= 'f') {
+                ret <<= 4;
+                ret |= ch - 'a' + 10;
+            } else {
+                break;
+            }
+        }
+        if (p == pos) {
+            throw new Exception("hex required");
+        }
+        return ret;
+    }
+
+    private int number() throws Exception {
+        int ret;
+        boolean minus = check('-');
+        if (check('0')) {
+            ret = check('x') ? digits16() : digits8();
+        } else {
+            ret = digits10();
+        }
+        return minus ? -ret : ret;
+    }
+
+    private void write(int size, int value) {
+        switch (size) {
+            case 1:
+                bin[bpos++] = (byte) value;
+                break;
+            case 2:
+                buf.putShort(bpos, (short) value);
+                bpos += 2;
+                break;
+            case 4:
+                buf.putInt(bpos, value);
+                bpos += 4;
+                break;
+        }
+    }
+
+    private void operand(int size) throws Exception {
+        if (check('$')) {
+            int n = number();
+            if (0 <= n && n <= 0x3f) {
+                write(1, n);
+            }
+        }
+    }
+
+    public byte[] asm(int pc, String s) {
+        this.pc = pc;
+        this.s = s;
+        pos = bpos = 0;
+        try {
+            operand(4);
+        } catch (Exception ex) {
+        }
+        return Arrays.copyOfRange(bin, 0, bpos);
+    }
+}
+
 class VAXDisasm {
 
     private static final String[] regs = {
@@ -1548,19 +1673,42 @@ class VAX {
 
 public class Main {
 
+    static String binhex(byte[] bin) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < bin.length; ++i) {
+            if (i > 0) {
+                sb.append(' ');
+            }
+            sb.append(String.format("%02x", bin[i]));
+        }
+        return sb.toString();
+    }
+
     static void test() {
 
         byte[] mem = new byte[256];
         ByteBuffer buf = ByteBuffer.wrap(mem).order(ByteOrder.LITTLE_ENDIAN);
+        VAXAsm asm = new VAXAsm();
         VAXDisasm dis = new VAXDisasm(buf, null, null);
         Random r = new Random(0);
         r.nextBytes(mem);
+        int ok = 0, ng = 0;
         for (int pc = 0; pc < mem.length - 32;) {
             String s = dis.getOperand(VAXType.LONG, pc);
+            byte[] bin = asm.asm(pc, s);
             int len = Math.max(1, dis.getPC() - pc);  // for 7f -(pc)
+            if (Arrays.equals(bin, Arrays.copyOfRange(mem, pc, pc + len))) {
+                s += " [OK]";
+                ++ok;
+            } else {
+                s += " [NG] " + binhex(bin);
+                ++ng;
+            }
             dis.output(System.out, pc, len, s);
             pc += len;
         }
+        System.out.printf("OK: %d, NG: %d, All %d", ok, ng, ok + ng);
+        System.out.println();
     }
 
     public static void main(String[] args) {
