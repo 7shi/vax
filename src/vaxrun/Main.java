@@ -192,7 +192,7 @@ class VAXAsm {
 
     private String s;
     private final byte[] bin = new byte[32];
-    ByteBuffer buf = ByteBuffer.wrap(bin).order(ByteOrder.LITTLE_ENDIAN);
+    private final ByteBuffer buf = ByteBuffer.wrap(bin).order(ByteOrder.LITTLE_ENDIAN);
     private int pc, pos, bpos;
 
     private int peek() {
