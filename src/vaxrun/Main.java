@@ -191,7 +191,7 @@ class Symbol {
 class VAXAsm {
 
     private String s;
-    private byte[] bin = new byte[32];
+    private final byte[] bin = new byte[32];
     ByteBuffer buf = ByteBuffer.wrap(bin).order(ByteOrder.LITTLE_ENDIAN);
     private int pc, pos, bpos;
 
@@ -213,15 +213,6 @@ class VAXAsm {
         skip();
         if (peek() == ch) {
             ++pos;
-            return true;
-        }
-        return false;
-    }
-
-    private boolean check(String str) {
-        skip();
-        if (s.substring(pos, pos + str.length()).equals(str)) {
-            pos += str.length();
             return true;
         }
         return false;
