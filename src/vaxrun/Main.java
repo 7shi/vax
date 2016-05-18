@@ -1553,7 +1553,7 @@ public class Main {
         byte[] mem = new byte[256];
         ByteBuffer buf = ByteBuffer.wrap(mem).order(ByteOrder.LITTLE_ENDIAN);
         VAXDisasm dis = new VAXDisasm(buf, null, null);
-        Random r = new Random();
+        Random r = new Random(0);
         r.nextBytes(mem);
         for (int pc = 0; pc < mem.length - 32;) {
             String s = dis.getOperand(VAXType.LONG, pc);
