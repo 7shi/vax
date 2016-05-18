@@ -218,6 +218,15 @@ class VAXAsm {
         return false;
     }
 
+    private boolean check(String str) {
+        skip();
+        if (s.substring(pos, pos + str.length()).equals(str)) {
+            pos += str.length();
+            return true;
+        }
+        return false;
+    }
+
     private int digits8() throws Exception {
         int ret = 0, p = pos, ch;
         for (; '0' <= (ch = peek()) && ch <= '7'; ++pos) {
@@ -265,15 +274,58 @@ class VAXAsm {
         return ret;
     }
 
+    private String symbol() {
+        skip();
+        int p = pos;
+        int ch = peek();
+        if (ch == '_' || Character.isAlphabetic(ch)) {
+            ++pos;
+        }
+        while ((ch = peek()) == '_' || Character.isDigit(ch) || Character.isAlphabetic(ch)) {
+            ++pos;
+        }
+        return s.substring(p, pos);
+    }
+
     private int number() throws Exception {
         int ret;
         boolean minus = check('-');
-        if (check('0')) {
-            ret = check('x') ? digits16() : digits8();
+        if (peek() == '0') {
+            ++pos;
+            if (peek() == 'x') {
+                ++pos;
+                ret = digits16();
+            } else {
+                --pos;
+                ret = digits8();
+            }
         } else {
             ret = digits10();
         }
         return minus ? -ret : ret;
+    }
+
+    private int reg() throws Exception {
+        int p = pos;
+        String sym = symbol();
+        if (sym.startsWith("r")) {
+            int n = Integer.parseInt(sym.substring(1));
+            if (0 <= n && n <= 15) {
+                return n;
+            }
+        }
+        switch (sym) {
+            case "ap":
+                return 12;
+            case "fp":
+                return 13;
+            case "sp":
+                return 14;
+            case "pc":
+                return 15;
+        }
+        pos = p;
+        return -1;
     }
 
     private void write(int size, int value) {
@@ -292,13 +344,110 @@ class VAXAsm {
         }
     }
 
-    private void operand(int size) throws Exception {
+    private void operandIndex() throws Exception {
+        if (!check('[')) {
+            return;
+        }
+        int reg = reg();
+        if (reg < 0 || !check(']')) {
+            throw new Exception("[r] required");
+        }
+        operandIndex();
+        write(1, 0x40 + reg);
+    }
+
+    private void operandInternal(int size, int adj) throws Exception {
         if (check('$')) {
             int n = number();
-            if (0 <= n && n <= 0x3f) {
+            operandIndex();
+            if (adj == 0 && 0 <= n && n <= 0x3f) {
                 write(1, n);
+            } else {
+                write(1, 0x8f + adj);
+                write(size, n);
             }
+            return;
         }
+        if (check('(')) {
+            int reg = reg();
+            if (reg < 0 || !check(')')) {
+                throw new Exception("(r) required");
+            }
+            if (check('+')) {
+                operandIndex();
+                write(1, 0x80 + adj + reg);
+            } else if (adj == 0) {
+                operandIndex();
+                write(1, 0x60 + reg);
+            } else {
+                operandIndex();
+                // *(r) -> *0(r)
+                write(1, 0xa0 + reg);
+                write(1, 0);
+            }
+            return;
+        }
+        if (check('-')) {
+            if (check('(')) {
+                if (adj != 0) {
+                    throw new Exception("* error");
+                }
+                int reg = reg();
+                if (reg < 0 || !check(')')) {
+                    throw new Exception("-(r) required");
+                }
+                operandIndex();
+                write(1, 0x70 + reg);
+                return;
+            }
+            --pos;
+        }
+        int reg = reg();
+        if (reg >= 0) {
+            if (adj != 0) {
+                throw new Exception("* error");
+            }
+            operandIndex();
+            write(1, 0x50 + reg);
+            return;
+        }
+        int disp = number();
+        if (check('(')) {
+            if ((reg = reg()) >= 0 && check(')')) {
+                operandIndex();
+                if (disp == (byte) disp) {
+                    write(1, 0xa0 + adj + reg);
+                    write(1, disp);
+                } else if (disp == (short) disp) {
+                    write(1, 0xc0 + adj + reg);
+                    write(2, disp);
+                } else {
+                    write(1, 0xe0 + adj + reg);
+                    write(4, disp);
+                }
+            }
+            return;
+        }
+        operandIndex();
+        int rel = disp - (pc + bpos + 2);
+        if (rel == (byte) rel) {
+            write(1, 0xaf + adj);
+            write(1, rel);
+            return;
+        }
+        rel = disp - (pc + bpos + 3);
+        if (rel == (short) rel) {
+            write(1, 0xcf + adj);
+            write(2, rel);
+            return;
+        }
+        rel = disp - (pc + bpos + 5);
+        write(1, 0xef + adj);
+        write(4, rel);
+    }
+
+    private void operand(int size) throws Exception {
+        operandInternal(size, check('*') ? 0x10 : 0);
     }
 
     public byte[] asm(int pc, String s) {
@@ -308,6 +457,7 @@ class VAXAsm {
         try {
             operand(4);
         } catch (Exception ex) {
+            bpos = 0;
         }
         return Arrays.copyOfRange(bin, 0, bpos);
     }
@@ -1684,9 +1834,9 @@ public class Main {
         return sb.toString();
     }
 
-    static void test() {
+    static void testOperand() {
 
-        byte[] mem = new byte[256];
+        byte[] mem = new byte[65536];
         ByteBuffer buf = ByteBuffer.wrap(mem).order(ByteOrder.LITTLE_ENDIAN);
         VAXAsm asm = new VAXAsm();
         VAXDisasm dis = new VAXDisasm(buf, null, null);
@@ -1698,13 +1848,13 @@ public class Main {
             byte[] bin = asm.asm(pc, s);
             int len = Math.max(1, dis.getPC() - pc);  // for 7f -(pc)
             if (Arrays.equals(bin, Arrays.copyOfRange(mem, pc, pc + len))) {
-                s += " [OK]";
+                //s += " [OK]";
                 ++ok;
             } else {
                 s += " [NG] " + binhex(bin);
                 ++ng;
+                dis.output(System.out, pc, len, s);
             }
-            dis.output(System.out, pc, len, s);
             pc += len;
         }
         System.out.printf("OK: %d, NG: %d, All %d", ok, ng, ok + ng);
@@ -1744,7 +1894,7 @@ public class Main {
 //            System.err.println("    -m: verbose mode with memory dump");
 //            System.err.println("    -v: verbose mode (output syscall and disassemble)");
 //            System.err.println("    -s: syscall mode (output syscall)");
-            test();
+            testOperand();
             System.exit(1);
         }
         try {
