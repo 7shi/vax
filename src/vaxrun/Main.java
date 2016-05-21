@@ -556,6 +556,63 @@ class VAXAsm {
         instruction();
         return Arrays.copyOfRange(bin, 0, bpos);
     }
+
+    public static final String binhex(byte[] bin) {
+        if (bin == null) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < bin.length; ++i) {
+            if (i > 0) {
+                sb.append(' ');
+            }
+            sb.append(String.format("%02x", bin[i]));
+        }
+        return sb.toString();
+    }
+
+    public static final void test(boolean opr) {
+
+        byte[] mem = new byte[65536];
+        ByteBuffer buf = ByteBuffer.wrap(mem).order(ByteOrder.LITTLE_ENDIAN);
+        VAXAsm asm = new VAXAsm();
+        VAXDisasm dis = new VAXDisasm(buf, null, null);
+        Random r = new Random(0);
+        r.nextBytes(mem);
+        int ok = 0, ng = 0;
+        for (int pc = 0; pc < mem.length - 32;) {
+            String s = "?";
+            byte[] bin = null;
+            try {
+                if (opr) {
+                    s = dis.getOperand(VAXType.LONG, pc);
+                    bin = asm.asmOperand(4, pc, s);
+                } else {
+                    s = dis.disasm1(pc);
+                    bin = asm.asm(pc, s);
+                }
+            } catch (Exception ex) {
+                System.out.println(ex.getMessage());
+            }
+            int len = dis.getPC() - pc;
+            while (len < 1) {  // for 7f: -(pc)
+                len += 4;
+            }
+            byte[] orig = Arrays.copyOfRange(mem, pc, pc + len);
+            if (bin != null && Arrays.equals(bin, orig)) {
+                ++ok;
+            } else {
+                System.out.printf("%08x: ", pc);
+                System.out.println(s);
+                System.out.println("     [OK] " + binhex(orig));
+                System.out.println("     [NG] " + binhex(bin));
+                ++ng;
+            }
+            pc += len;
+        }
+        System.out.printf("OK: %d, NG: %d, All %d", ok, ng, ok + ng);
+        System.out.println();
+    }
 }
 
 class VAXDisasm {
@@ -1925,63 +1982,6 @@ class VAX {
 
 public class Main {
 
-    static String binhex(byte[] bin) {
-        if (bin == null) {
-            return "";
-        }
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < bin.length; ++i) {
-            if (i > 0) {
-                sb.append(' ');
-            }
-            sb.append(String.format("%02x", bin[i]));
-        }
-        return sb.toString();
-    }
-
-    static void test(boolean opr) {
-
-        byte[] mem = new byte[65536];
-        ByteBuffer buf = ByteBuffer.wrap(mem).order(ByteOrder.LITTLE_ENDIAN);
-        VAXAsm asm = new VAXAsm();
-        VAXDisasm dis = new VAXDisasm(buf, null, null);
-        Random r = new Random(0);
-        r.nextBytes(mem);
-        int ok = 0, ng = 0;
-        for (int pc = 0; pc < mem.length - 32;) {
-            String s = "?";
-            byte[] bin = null;
-            try {
-                if (opr) {
-                    s = dis.getOperand(VAXType.LONG, pc);
-                    bin = asm.asmOperand(4, pc, s);
-                } else {
-                    s = dis.disasm1(pc);
-                    bin = asm.asm(pc, s);
-                }
-            } catch (Exception ex) {
-                System.out.println(ex.getMessage());
-            }
-            int len = dis.getPC() - pc;
-            while (len < 1) {  // for 7f: -(pc)
-                len += 4;
-            }
-            byte[] orig = Arrays.copyOfRange(mem, pc, pc + len);
-            if (bin != null && Arrays.equals(bin, orig)) {
-                ++ok;
-            } else {
-                System.out.printf("%08x: ", pc);
-                System.out.println(s);
-                System.out.println("     [OK] " + binhex(orig));
-                System.out.println("     [NG] " + binhex(bin));
-                ++ng;
-            }
-            pc += len;
-        }
-        System.out.printf("OK: %d, NG: %d, All %d", ok, ng, ok + ng);
-        System.out.println();
-    }
-
     public static void main(String[] args) {
         boolean disasm = false;
         int mode = 0;
@@ -2015,7 +2015,7 @@ public class Main {
 //            System.err.println("    -m: verbose mode with memory dump");
 //            System.err.println("    -v: verbose mode (output syscall and disassemble)");
 //            System.err.println("    -s: syscall mode (output syscall)");
-            test(false);
+            VAXAsm.test(false);
             System.exit(1);
         }
         try {
