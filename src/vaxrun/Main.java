@@ -1,8 +1,10 @@
 // This file is licensed under the CC0.
 package vaxrun;
 
+import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -1124,11 +1126,17 @@ class VAX {
     private final byte[] mem = new byte[0x40000];
     private final int[] r = new int[16];
     private boolean n, z, v, c;
-    private final ByteBuffer buf;
+    private final ByteBuffer buf = ByteBuffer.wrap(mem).order(ByteOrder.LITTLE_ENDIAN);
     private final AOut aout;
+    private final VAXAsm asm = new VAXAsm();
     private final VAXDisasm dis;
     private final Stack<AddrSym> callStack = new Stack<>();
     private int mode;
+
+    public VAX() {
+        aout = null;
+        dis = new VAXDisasm(buf, null, r);
+    }
 
     public VAX(AOut aout, String[] args) {
         this.aout = aout;
@@ -1136,7 +1144,6 @@ class VAX {
         int dstart = (aout.a_text + 0x1ff) & ~0x1ff;
         System.arraycopy(aout.data, 0, mem, dstart, aout.a_data);
         r[PC] = aout.a_entry;
-        buf = ByteBuffer.wrap(mem).order(ByteOrder.LITTLE_ENDIAN);
         dis = new VAXDisasm(buf, aout, r);
         setArgs(args);
     }
@@ -1353,6 +1360,19 @@ class VAX {
         System.err.println();
     }
 
+    public void debugRepl(PrintStream out) {
+        out.printf("r0 = %08x  r1 = %08x  r2 = %08x  r3 = %08x", r[0], r[1], r[2], r[3]);
+        out.println();
+        out.printf("r4 = %08x  r5 = %08x  r6 = %08x  r7 = %08x", r[4], r[5], r[6], r[7]);
+        out.println();
+        out.printf("r8 = %08x  r9 = %08x  r10= %08x  r11= %08x", r[8], r[9], r[10], r[11]);
+        out.println();
+        out.printf("ap = %08x  fp = %08x  sp = %08x  pc = %08x %c%c%c%c",
+                r[12], r[13], r[14], r[15],
+                n ? 'N' : '-', z ? 'Z' : '-', v ? 'V' : '-', c ? 'C' : '-');
+        out.println();
+    }
+
     public String getCallStack() {
         if (callStack.empty()) {
             return "";
@@ -1405,6 +1425,27 @@ class VAX {
 
     public void disasm(PrintStream out) {
         dis.disasm(out, 0, aout.a_text);
+    }
+
+    public void interpret(PrintStream out, String src) {
+        byte[] bin;
+        try {
+            bin = asm.asm(r[PC], src);
+        } catch (Exception ex) {
+            out.println(ex.getMessage());
+            return;
+        }
+        System.arraycopy(bin, 0, mem, r[PC], bin.length);
+        out.printf("%08x  ", r[PC]);
+        out.println(VAXAsm.binhex(bin) + "  " + dis.disasm1(r[PC]));
+        int m = mode;
+        mode = 1;
+        try {
+            step();
+        } catch (Exception ex) {
+            out.println(ex.getMessage());
+        }
+        mode = m;
     }
 
     public void run(int mode) throws Exception {
@@ -2047,6 +2088,28 @@ public class Main {
                 case "-e":
                     memdump = true;
                     break;
+                case "-r": {
+                    System.out.println("Press [Ctrl]+[C] to exit.");
+                    System.out.println();
+                    VAX vax = new VAX();
+                    try (InputStreamReader isr = new InputStreamReader(System.in);
+                            BufferedReader br = new BufferedReader(isr)) {
+                        for (;;) {
+                            vax.debugRepl(System.out);
+                            System.out.println();
+                            System.out.print("VAX> ");
+                            String line = br.readLine();
+                            if (line == null) {
+                                break;
+                            }
+                            vax.interpret(System.out, line);
+                        }
+                    } catch (Exception ex) {
+                        ex.printStackTrace(System.err);
+                        System.exit(1);
+                    }
+                    return;
+                }
                 default:
                     target = arg;
                     args2 = Arrays.copyOfRange(args, i, args.length);
@@ -2060,6 +2123,7 @@ public class Main {
             System.err.println("    -v: verbose mode (output syscall and disassemble)");
             System.err.println("    -s: syscall mode (output syscall)");
             System.err.println("    -e: memory dump");
+            System.err.println("    -r: read-eval-print loop (repl)");
             System.exit(1);
         }
         try {
