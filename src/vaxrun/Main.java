@@ -218,8 +218,21 @@ class VAXAsm {
         return false;
     }
 
-    private int digits8() throws Exception {
-        int ret = 0, p = pos, ch;
+    private boolean string(String s) {
+        int p = pos;
+        for (int i = 0; i < s.length(); ++i) {
+            if (peek() != s.charAt(i)) {
+                pos = p;
+                return false;
+            }
+            ++pos;
+        }
+        return true;
+    }
+
+    private long digits8() throws Exception {
+        long ret = 0;
+        int p = pos, ch;
         for (; '0' <= (ch = peek()) && ch <= '7'; ++pos) {
             ret <<= 3;
             ret |= ch - '0';
@@ -230,8 +243,9 @@ class VAXAsm {
         return ret;
     }
 
-    private int digits10() throws Exception {
-        int ret = 0, p = pos, ch;
+    private long digits10() throws Exception {
+        long ret = 0;
+        int p = pos, ch;
         for (; '0' <= (ch = peek()) && ch <= '9'; ++pos) {
             ret *= 10;
             ret += ch - '0';
@@ -242,8 +256,9 @@ class VAXAsm {
         return ret;
     }
 
-    private int digits16() throws Exception {
-        int ret = 0, p = pos;
+    private long digits16() throws Exception {
+        long ret = 0;
+        int p = pos;
         for (;; ++pos) {
             int ch = peek();
             if ('0' <= ch && ch <= '9') {
@@ -265,21 +280,25 @@ class VAXAsm {
         return ret;
     }
 
+    private static boolean isLetter(int ch) {
+        return ch == '.' || ch == '_' || Character.isAlphabetic(ch);
+    }
+
     private String symbol() {
         skip();
         int p = pos;
         int ch = peek();
-        if (ch == '_' || Character.isAlphabetic(ch)) {
+        if (isLetter(ch)) {
             ++pos;
         }
-        while ((ch = peek()) == '_' || Character.isDigit(ch) || Character.isAlphabetic(ch)) {
+        while (isLetter(ch = peek()) || Character.isDigit(ch)) {
             ++pos;
         }
         return s.substring(p, pos);
     }
 
-    private int number() throws Exception {
-        int ret;
+    private long number() throws Exception {
+        long ret;
         boolean minus = check('-');
         if (peek() == '0') {
             ++pos;
@@ -296,9 +315,7 @@ class VAXAsm {
         return minus ? -ret : ret;
     }
 
-    private int reg() throws Exception {
-        int p = pos;
-        String sym = symbol();
+    private int getReg(String sym) {
         if (sym.startsWith("r")) {
             int n = Integer.parseInt(sym.substring(1));
             if (0 <= n && n <= 15) {
@@ -315,41 +332,72 @@ class VAXAsm {
             case "pc":
                 return 15;
         }
-        pos = p;
         return -1;
     }
 
-    private void write(int size, int value) {
+    private int reg() throws Exception {
+        int p = pos;
+        int ret = getReg(symbol());
+        if (ret < 0) {
+            pos = p;
+        }
+        return ret;
+    }
+
+    private long write(int size, long value) throws Exception {
         switch (size) {
             case 1:
-                bin[bpos++] = (byte) value;
-                break;
+                return bin[bpos++] = (byte) value;
             case 2:
                 buf.putShort(bpos, (short) value);
                 bpos += 2;
-                break;
+                return (short) value;
             case 4:
-                buf.putInt(bpos, value);
+                buf.putInt(bpos, (int) value);
                 bpos += 4;
-                break;
+                return (int) value;
+            case 8:
+                buf.putLong(bpos, value);
+                bpos += 8;
+                return value;
         }
+        throw new Exception("unknown size: " + size);
     }
 
     private void operandIndex() throws Exception {
         if (!check('[')) {
             return;
         }
-        int reg = reg();
-        if (reg < 0 || !check(']')) {
-            throw new Exception("[r] required");
+        String sym = symbol();
+        int reg = getReg(sym);
+        if (reg >= 0) {
+            if (!check(']')) {
+                throw new Exception("']' required");
+            }
+            operandIndex();
+            write(1, 0x40 + reg);
+            return;
         }
-        operandIndex();
-        write(1, 0x40 + reg);
+        switch (sym) {
+            case "d":
+            case "f":
+            case "g":
+            case "h":
+                if (string("-float")) {
+                    if (!check(']')) {
+                        throw new Exception("']' required");
+                    }
+                    operandIndex();
+                    return;
+                }
+                break;
+        }
+        throw new Exception("register required: " + sym);
     }
 
     private void operandInternal(int size, int adj) throws Exception {
         if (check('$')) {
-            int n = number();
+            long n = number();
             operandIndex();
             if (adj == 0 && 0 <= n && n <= 0x3f) {
                 write(1, n);
@@ -402,7 +450,7 @@ class VAXAsm {
             write(1, 0x50 + reg);
             return;
         }
-        int disp = number();
+        int disp = (int) number();
         if (check('(')) {
             if ((reg = reg()) >= 0 && check(')')) {
                 operandIndex();
@@ -438,18 +486,74 @@ class VAXAsm {
     }
 
     private void operand(int size) throws Exception {
-        operandInternal(size, check('*') ? 0x10 : 0);
+        if (check('*')) {
+            operandInternal(4, 0x10);
+        } else {
+            operandInternal(size, 0);
+        }
     }
 
-    public byte[] asm(int pc, String s) {
+    private void numbers(int size) throws Exception {
+        do {
+            write(size, number());
+        } while (check(','));
+    }
+
+    private void instruction() throws Exception {
+        String mne = symbol();
+        switch (mne.toLowerCase()) {
+            case ".byte":
+                numbers(1);
+                return;
+            case ".word":
+                numbers(2);
+                return;
+            case ".long":
+                numbers(4);
+                return;
+        }
+        VAXOp op;
+        try {
+            op = VAXOp.valueOf(mne.toUpperCase());
+        } catch (Exception ex) {
+            throw new Exception("unknown mnemonic: " + mne);
+        }
+        if (op.op < 0x100) {
+            write(1, op.op);
+        } else {
+            write(1, op.op >> 8);
+            write(1, op.op & 0xff);
+        }
+        for (int i = 0; i < op.oprs.length; ++i) {
+            if (i > 0 && !check(',')) {
+                throw new Exception("',' required");
+            }
+            VAXType t = VAXType.table[op.oprs[i]];
+            if (t == VAXType.RELB || t == VAXType.RELW) {
+                int ad = (int) number();
+                int rel = ad - (pc + bpos + t.size);
+                if (write(t.size, rel) != rel) {
+                    throw new Exception("out of range: 0x" + Integer.toHexString(ad));
+                }
+            } else {
+                operand(t.size);
+            }
+        }
+    }
+
+    public byte[] asmOperand(int size, int pc, String s) throws Exception {
         this.pc = pc;
         this.s = s;
         pos = bpos = 0;
-        try {
-            operand(4);
-        } catch (Exception ex) {
-            bpos = 0;
-        }
+        operand(4);
+        return Arrays.copyOfRange(bin, 0, bpos);
+    }
+
+    public byte[] asm(int pc, String s) throws Exception {
+        this.pc = pc;
+        this.s = s;
+        pos = bpos = 0;
+        instruction();
         return Arrays.copyOfRange(bin, 0, bpos);
     }
 }
@@ -592,7 +696,9 @@ class VAXDisasm {
             case 6:
                 return "(" + reg + ")" + mem(r[rn], t.size, false);
             case 7:
-                r[rn] -= t.size;
+                if (rn != 15) {  // quick hack
+                    r[rn] -= t.size;
+                }
                 return "-(" + reg + ")" + mem(r[rn], t.size, false);
             case 8:
                 if (rn == 15) {
@@ -683,10 +789,14 @@ class VAXDisasm {
                 case CASEL:
                     if (i == op.oprs.length - 1) {
                         casead = r[PC];
-                        if (opr.startsWith("$0x")) {
-                            casec = Integer.parseInt(opr.substring(3), 16) + 1;
-                        } else if (opr.startsWith("$")) {
-                            casec = Integer.parseInt(opr.substring(1)) + 1;
+                        try {
+                            if (opr.startsWith("$0x")) {
+                                casec = Integer.parseInt(opr.substring(3), 16) + 1;
+                            } else if (opr.startsWith("$")) {
+                                casec = Integer.parseInt(opr.substring(1)) + 1;
+                            }
+                        } catch (Exception ex) {
+                            // ignore
                         }
                     }
                     break;
@@ -1816,6 +1926,9 @@ class VAX {
 public class Main {
 
     static String binhex(byte[] bin) {
+        if (bin == null) {
+            return "";
+        }
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < bin.length; ++i) {
             if (i > 0) {
@@ -1826,7 +1939,7 @@ public class Main {
         return sb.toString();
     }
 
-    static void testOperand() {
+    static void test(boolean opr) {
 
         byte[] mem = new byte[65536];
         ByteBuffer buf = ByteBuffer.wrap(mem).order(ByteOrder.LITTLE_ENDIAN);
@@ -1836,19 +1949,32 @@ public class Main {
         r.nextBytes(mem);
         int ok = 0, ng = 0;
         for (int pc = 0; pc < mem.length - 32;) {
-            String s = dis.getOperand(VAXType.LONG, pc);
-            byte[] bin = asm.asm(pc, s);
+            String s = "?";
+            byte[] bin = null;
+            try {
+                if (opr) {
+                    s = dis.getOperand(VAXType.LONG, pc);
+                    bin = asm.asmOperand(4, pc, s);
+                } else {
+                    s = dis.disasm1(pc);
+                    bin = asm.asm(pc, s);
+                }
+            } catch (Exception ex) {
+                System.out.println(ex.getMessage());
+            }
             int len = dis.getPC() - pc;
             while (len < 1) {  // for 7f: -(pc)
                 len += 4;
             }
-            if (Arrays.equals(bin, Arrays.copyOfRange(mem, pc, pc + len))) {
-                //s += " [OK]";
+            byte[] orig = Arrays.copyOfRange(mem, pc, pc + len);
+            if (bin != null && Arrays.equals(bin, orig)) {
                 ++ok;
             } else {
-                s += " [NG] " + binhex(bin);
+                System.out.printf("%08x: ", pc);
+                System.out.println(s);
+                System.out.println("     [OK] " + binhex(orig));
+                System.out.println("     [NG] " + binhex(bin));
                 ++ng;
-                dis.output(System.out, pc, len, s);
             }
             pc += len;
         }
@@ -1889,7 +2015,7 @@ public class Main {
 //            System.err.println("    -m: verbose mode with memory dump");
 //            System.err.println("    -v: verbose mode (output syscall and disassemble)");
 //            System.err.println("    -s: syscall mode (output syscall)");
-            testOperand();
+            test(false);
             System.exit(1);
         }
         try {
