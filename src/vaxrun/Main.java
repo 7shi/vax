@@ -664,13 +664,14 @@ class VAXDisasm {
             System.arraycopy(vmr, 0, r, 0, 16);
         }
         r[PC] = addr;
-        int opc = fetch();
-        VAXOp op = VAXOp.table[opc];
+        int opc1 = fetch(), opc2 = 0;
+        VAXOp op = VAXOp.table[opc1];
         if (op == null) {
-            op = VAXOp.table[opc = opc << 8 | fetch()];
+            opc2 = fetch();
+            op = VAXOp.table[opc1 << 8 | opc2];
         }
         if (op == null) {
-            return String.format(".word 0x%x", opc);
+            return String.format(".word 0x%x", opc2 << 8 | opc1);
         }
         StringBuilder sb = new StringBuilder(op.mne);
         for (int i = 0; i < op.oprs.length; ++i) {
