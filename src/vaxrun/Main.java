@@ -1046,12 +1046,48 @@ class AOut {
                 return;
             }
         }
-        header = null;
-        a_text = a_data = a_bss = a_syms = a_entry = a_trsize = a_drsize = 0;
         text = java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(path));
         data = null;
         syms = null;
+        header = null;
+        a_text = text.length;
+        a_data = a_bss = a_syms = a_entry = a_trsize = a_drsize = 0;
         addrs = new Symbol[0];
+    }
+
+    private void dump(PrintStream out, byte[] m, int start, int ad, int len) {
+        if (ad + len > m.length) {
+            len = m.length - ad;
+        }
+        for (; ad < len; ad += 16) {
+            out.printf("%08x ", start + ad);
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < 16; ++i) {
+                if (i == 8) {
+                    out.print(' ');
+                }
+                if (ad + i < len) {
+                    int b = Byte.toUnsignedInt(m[ad + i]);
+                    out.printf(" %02x", b);
+                    sb.append((char) (b < ' ' || b > 126 ? '.' : b));
+                } else {
+                    out.print("   ");
+                }
+            }
+            out.println("  " + sb.toString());
+        }
+    }
+
+    public void dump(PrintStream out) {
+        out.println(this);
+        if (text != null && a_text > 0) {
+            out.println(".text");
+            dump(out, text, 0, 0, a_text);
+        }
+        if (data != null && a_data > 0) {
+            out.println(".data");
+            dump(out, data, (a_text + 0x1ff) & ~0x1ff, 0, a_data);
+        }
     }
 
     @Override
@@ -1988,9 +2024,9 @@ class VAX {
 public class Main {
 
     public static void main(String[] args) {
-        boolean disasm = false;
+        boolean disasm = false, memdump = false;
         int mode = 0;
-        String aout = null;
+        String target = null;
         String[] args2 = null;
         OUTER:
         for (int i = 0; i < args.length; ++i) {
@@ -2008,27 +2044,35 @@ public class Main {
                 case "-m":
                     mode = 3;
                     break;
+                case "-e":
+                    memdump = true;
+                    break;
                 default:
-                    aout = arg;
+                    target = arg;
                     args2 = Arrays.copyOfRange(args, i, args.length);
                     break OUTER;
             }
         }
-        if (aout == null) {
-//            System.err.println("usage: vaxrun [-d|-v/-s] a.out [args ...]");
-//            System.err.println("    -d: disassemble mode (not run)");
-//            System.err.println("    -m: verbose mode with memory dump");
-//            System.err.println("    -v: verbose mode (output syscall and disassemble)");
-//            System.err.println("    -s: syscall mode (output syscall)");
-            VAXAsm.test(false);
+        if (target == null) {
+            System.err.println("usage: vaxrun [-d|-v/-s] a.out [args ...]");
+            System.err.println("    -d: disassemble mode (not run)");
+            System.err.println("    -m: verbose mode with memory dump");
+            System.err.println("    -v: verbose mode (output syscall and disassemble)");
+            System.err.println("    -s: syscall mode (output syscall)");
+            System.err.println("    -e: memory dump");
             System.exit(1);
         }
         try {
-            VAX vax = new VAX(new AOut(aout), args2);
-            if (disasm) {
-                vax.disasm(System.out);
+            AOut aout = new AOut(target);
+            if (memdump) {
+                aout.dump(System.out);
             } else {
-                vax.run(mode);
+                VAX vax = new VAX(aout, args2);
+                if (disasm) {
+                    vax.disasm(System.out);
+                } else {
+                    vax.run(mode);
+                }
             }
         } catch (Exception ex) {
             ex.printStackTrace(System.err);
