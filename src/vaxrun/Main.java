@@ -864,7 +864,12 @@ class VAXDisasm {
     }
 
     public void disasm(PrintStream out, int start, int end) {
-        addrs = aout != null ? aout.getAddresses() : new LinkedList<>();
+        if (aout != null) {
+            addrs = aout.getAddresses();
+            out.println(aout);
+        } else {
+            addrs = new LinkedList<>();
+        }
         casec = 0;
         r[PC] = start;
         while (r[PC] < end) {
