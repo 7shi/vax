@@ -942,7 +942,7 @@ class VAXDisasm {
     }
 
     public String sym(int ad, int size, boolean deref) {
-        boolean f = mode > 2 && aout != null && ad >= aout.a_text;
+        boolean f = (mode > 2 && aout != null && ad >= aout.a_text) || mode == 4;
         if (aout != null && aout.symT.containsKey(ad)) {
             String s = aout.symT.get(ad);
             if (!f) {
@@ -1135,8 +1135,10 @@ class VAX {
 
     public VAX() {
         aout = null;
-        dis = new VAXDisasm(buf, null, r);
+        mode = 1;
         r[SP] = mem.length - 4;
+        dis = new VAXDisasm(buf, null, r);
+        dis.setMode(4);
     }
 
     public VAX(AOut aout, String[] args) {
@@ -1439,14 +1441,11 @@ class VAX {
         System.arraycopy(bin, 0, mem, r[PC], bin.length);
         out.printf("%08x  ", r[PC]);
         out.println(VAXAsm.binhex(bin) + "  " + dis.disasm1(r[PC]));
-        int m = mode;
-        mode = 1;
         try {
             step();
         } catch (Exception ex) {
             out.println(ex.getMessage());
         }
-        mode = m;
     }
 
     public void run(int mode) throws Exception {
