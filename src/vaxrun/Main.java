@@ -1136,6 +1136,7 @@ class VAX {
     public VAX() {
         aout = null;
         dis = new VAXDisasm(buf, null, r);
+        r[SP] = mem.length - 4;
     }
 
     public VAX(AOut aout, String[] args) {
