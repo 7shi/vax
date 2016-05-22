@@ -2117,12 +2117,12 @@ public class Main {
             }
         }
         if (target == null) {
-            System.err.println("usage: vaxrun [-d|-v/-s] a.out [args ...]");
-            System.err.println("    -d: disassemble mode (not run)");
-            System.err.println("    -m: verbose mode with memory dump");
-            System.err.println("    -v: verbose mode (output syscall and disassemble)");
-            System.err.println("    -s: syscall mode (output syscall)");
-            System.err.println("    -e: memory dump");
+            System.err.println("usage: vaxrun [options]");
+            System.err.println("    -d a.out: disassemble mode (not run)");
+            System.err.println("    -e a.out: memory dump");
+            System.err.println("    -m a.out [args ...]: verbose mode with memory dump");
+            System.err.println("    -v a.out [args ...]: verbose mode (output syscall and disassemble)");
+            System.err.println("    -s a.out [args ...]: syscall mode (output syscall)");
             System.err.println("    -r: read-eval-print loop (repl)");
             System.exit(1);
         }
