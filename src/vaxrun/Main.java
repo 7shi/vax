@@ -1688,6 +1688,8 @@ class VAX {
         int size = 1 << ((op & 0x7f) >> 5);
         int s1, s2, s3, d, tmp;
         switch (op) {
+            case 1: // nop
+                break;
             case 0xbc: // chmk
                 syscall();
                 break;
