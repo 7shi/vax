@@ -142,6 +142,18 @@ enum VAXOp {
         this.mne = toString().toLowerCase();
         this.oprs = oprs.toCharArray();
     }
+
+    public String getUsage() {
+        StringBuilder sb = new StringBuilder(toString().toLowerCase());
+        sb.append(' ');
+        for (int i = 0; i < oprs.length; ++i) {
+            if (i > 0) {
+                sb.append(',');
+            }
+            sb.append(VAXType.table[oprs[i]]);
+        }
+        return sb.toString();
+    }
 }
 
 class Symbol {
@@ -532,13 +544,22 @@ class VAXAsm {
             }
             VAXType t = VAXType.table[op.oprs[i]];
             if (t == VAXType.RELB || t == VAXType.RELW) {
-                int ad = (int) number();
+                int ad;
+                try {
+                    ad = (int) number();
+                } catch (Exception ex) {
+                    throw new Exception("address required");
+                }
                 int rel = ad - (pc + bpos + t.size);
                 if (write(t.size, rel) != rel) {
                     throw new Exception("out of range: 0x" + Integer.toHexString(ad));
                 }
             } else {
-                operand(t.size);
+                try {
+                    operand(t.size);
+                } catch (Exception ex) {
+                    throw new Exception("usage: " + op.getUsage());
+                }
             }
         }
     }
