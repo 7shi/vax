@@ -2064,6 +2064,28 @@ class VAX {
 
 public class Main {
 
+    static final void repl() {
+        System.out.println("Press [Ctrl]+[C] to exit.");
+        System.out.println();
+        VAX vax = new VAX();
+        try (InputStreamReader isr = new InputStreamReader(System.in);
+                BufferedReader br = new BufferedReader(isr)) {
+            for (;;) {
+                vax.debugRepl(System.out);
+                System.out.println();
+                System.out.print("VAX> ");
+                String line = br.readLine();
+                if (line == null) {
+                    break;
+                }
+                vax.interpret(System.out, line);
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace(System.err);
+            System.exit(1);
+        }
+    }
+
     public static void main(String[] args) {
         boolean disasm = false, memdump = false;
         int mode = 0;
@@ -2088,28 +2110,9 @@ public class Main {
                 case "-e":
                     memdump = true;
                     break;
-                case "-r": {
-                    System.out.println("Press [Ctrl]+[C] to exit.");
-                    System.out.println();
-                    VAX vax = new VAX();
-                    try (InputStreamReader isr = new InputStreamReader(System.in);
-                            BufferedReader br = new BufferedReader(isr)) {
-                        for (;;) {
-                            vax.debugRepl(System.out);
-                            System.out.println();
-                            System.out.print("VAX> ");
-                            String line = br.readLine();
-                            if (line == null) {
-                                break;
-                            }
-                            vax.interpret(System.out, line);
-                        }
-                    } catch (Exception ex) {
-                        ex.printStackTrace(System.err);
-                        System.exit(1);
-                    }
+                case "-r":
+                    repl();
                     return;
-                }
                 default:
                     target = arg;
                     args2 = Arrays.copyOfRange(args, i, args.length);
