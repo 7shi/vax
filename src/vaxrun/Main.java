@@ -604,7 +604,7 @@ class VAXAsm {
                 try {
                     ad = (int) number();
                 } catch (Exception ex) {
-                    throw new Exception("address required");
+                    throw new Exception("usage: " + op.getUsage());
                 }
                 int rel = ad - (pc + bpos + t.size);
                 if (write(t.size, rel) != rel) {
