@@ -586,7 +586,7 @@ class VAXAsm {
             op = VAXOp.valueOf(mne.toUpperCase());
         } catch (Exception ex) {
             throw new Exception("unknown mnemonic: " + mne
-                    + " (" + String.join(", ", VAXOp.guess(mne, 5)) + "?)");
+                    + " (" + String.join(", ", VAXOp.guess(mne, 8)) + "?)");
         }
         if (op.op < 0x100) {
             write(1, op.op);
